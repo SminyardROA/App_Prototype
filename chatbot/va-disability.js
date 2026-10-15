@@ -1,7 +1,7 @@
 import { SHOULDER_TOPIC, isShoulderRatingQuestion } from "./shoulder-ratings.js";
 import { vaCfrPlans } from "./va-cfr-retrieval.js";
 import { SUSAN_LUKAS_TOPIC, PENTAGON_911_EXPOSURE,
-  isPentagon911HealthQuestion, isSusanLukasResearchQuestion } from "./legislation-topics.js";
+  isPentagon911HealthQuestion, isSusanLukasResearchQuestion, HEADACHE_TOPIC } from "./legislation-topics.js";
 import {
   isInjuryResearchQuestion, injuryRegions, injurySearchQuery, injuryDocumentRelevant, isCfrTitle38Source,
 } from "./injury-retrieval.js";
@@ -24,6 +24,7 @@ const SPECIFIC_SUBJECT_PATTERNS = [
 ];
 const VA_DISABILITY_TOPIC_GROUPS = [
   ...SPECIFIC_SUBJECT_PATTERNS.map(pattern => ({ query: pattern, evidence: pattern })),
+  { query: HEADACHE_TOPIC, evidence: HEADACHE_TOPIC },
   { query: PENTAGON_911_EXPOSURE, evidence: PENTAGON_911_EXPOSURE },
   {
     query: /\b(?:presumptive|PACT Act|Agent Orange|burn pits?|toxic exposure|Camp Lejeune|Gulf War|radiation exposure)\b/i,
@@ -65,7 +66,7 @@ export function isVaDisabilityQuestion(question) {
   const hasPresumptiveTopic =
     /\b(?:Agent Orange|burn pits?|toxic exposure|Camp Lejeune|Gulf War|radiation exposure)\b/i.test(text);
   const hasDisabilityProgram = /\b(?:CRDP|CRSC|TDIU|individual unemployability|special monthly compensation|C&P exam)\b/i.test(text);
-  const hasNamedCondition = SHOULDER_TOPIC.test(text) || RESPIRATORY_TOPIC.test(text) ||
+  const hasNamedCondition = SHOULDER_TOPIC.test(text) || RESPIRATORY_TOPIC.test(text) || HEADACHE_TOPIC.test(text) ||
     /\b(?:PTSD|tinnitus|sleep apnea|TBI|cancers?|carcinoma|lymphoma|melanoma|leukemia)\b/i.test(text);
 
    return vaCfrPlans(text).length > 0 || isSusanLukasResearchQuestion(text) ||
@@ -90,6 +91,7 @@ const CONDITION_CONTEXT = [
   /\b(?:carcinoma|lymphoma|melanoma|leukemia|glioblastoma)\b/i,
   SHOULDER_TOPIC,
   RESPIRATORY_TOPIC,
+  HEADACHE_TOPIC,
   ...injuryRegions("knee ankle hip wrist elbow lumbar foot arm leg").map(region => region.pattern),
 ];
 const SUBJECT_CONTEXT = [...EXPOSURE_CONTEXT, ...CONDITION_CONTEXT];
@@ -103,7 +105,11 @@ function isFollowUp(text) {
 export function resolveVaDisabilityQuestion(message, history = []) {
   const latest = String(message || "").trim();
   const directlyVa = isVaDisabilityQuestion(latest);
-  if (directlyVa && !/^(?:what about|how about|what if|and|also)\b/i.test(latest)) {
+  const contextualResearch = FOLLOW_UP.test(latest) &&
+    (HEADACHE_TOPIC.test(latest) || SUSAN_LUKAS_TOPIC.test(latest)) &&
+    !/\b(?:friend|buddy|spouse|wife|husband|son|daughter|child)\b/i.test(latest);
+  if (directlyVa && !/^(?:what about|how about|what if|and|also)\b/i.test(latest) &&
+      !contextualResearch) {
     return { question: latest, evidenceQuestion: latest, requiresEvidence: true, followUp: false };
   }
   if (!isFollowUp(latest) || OTHER_TOPIC.test(latest)) {
@@ -133,6 +139,12 @@ export function resolveVaDisabilityQuestion(message, history = []) {
       .matchAll(new RegExp(pattern.source, "gi"))];
     return matches.length ? [matches.at(-1)[0]] : [];
   });
+  // A named bill is a prior research topic, not a reported exposure fact.
+  // Preserve it for short continuations without replacing a real exposure.
+  if (!latestHasExposure && !SUSAN_LUKAS_TOPIC.test(latest)) {
+    const proposalTurn = [...topicTurns].reverse().find(turn => SUSAN_LUKAS_TOPIC.test(turn.content));
+    if (proposalTurn) context.push(proposalTurn.content.match(SUSAN_LUKAS_TOPIC)[0]);
+  }
   const precedingDuty = [...topicTurns].reverse().find(turn => DUTY_CONTEXT.test(turn.content));
   if (!DUTY_CONTEXT.test(latest) && precedingDuty) context.push(precedingDuty.content.match(DUTY_CONTEXT)[0]);
   const evidenceQuestion = context.length
@@ -144,7 +156,7 @@ export function resolveVaDisabilityQuestion(message, history = []) {
 export function focusedVaSearchQuery(question) {
   const text = String(question || "");
   if (isSusanLukasResearchQuestion(text)) {
-    return `${text}\nSusan E. Lukas Act ROA proposed legislation Pentagon September 11 respiratory illness service members nonresponders; existing VA claim service connection evidence 38 CFR 3.303`;
+    return `${text}\nSusan E. Lukas Act ROA proposed legislation Pentagon September 11 illness service members nonresponders; existing VA claim service connection evidence 38 CFR 3.303${HEADACHE_TOPIC.test(text) ? "; headache migraine candidate rating criteria 38 CFR 4.124a Diagnostic Code 8100" : ""}`;
   }
   if (isInjuryResearchQuestion(text)) return injurySearchQuery(text);
   const cancer = text.match(/\b(?:cancers?|carcinoma|malignan\w*|lymphoma|glioblastoma|melanoma|leukemia)\b/i);

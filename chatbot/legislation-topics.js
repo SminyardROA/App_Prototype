@@ -2,6 +2,9 @@
 // congressional testimony. Names identify a topic, never enactment.
 export const SUSAN_LUKAS_TOPIC =
   /\bSusan(?:\s+E\.?)?\s+Lu[ck]as(?:\s+9\/11\s+Servicemember\s+Fairness)?\s+Act\b/i;
+export const SUSAN_LUKAS_DOCUMENT =
+  "HHRG-119-VR09-20260203-SD004 ROA STATEMENT SUSAN LUKAS ACT.pdf";
+export const HEADACHE_TOPIC = /\b(?:headaches?|migraines?)\b/i;
 
 const september11 = String.raw`(?:9[/-]11|Sept?(?:ember)?\.?\s+11(?:th)?|11(?:th)?\s+Sept?(?:ember)?\.?)`;
 export const PENTAGON_911_EXPOSURE = new RegExp(
@@ -13,7 +16,8 @@ export const PENTAGON_911_EXPOSURE = new RegExp(
 export function isPentagon911HealthQuestion(question) {
   const text = String(question || "");
   return PENTAGON_911_EXPOSURE.test(text) &&
-    /\b(?:respirator\w*|breath\w*|asthma|lungs?|bronch\w*|cancers?|illness|diseases?|medical|health|symptoms?|toxic|exposure|presumpt\w*|disabilit\w*|claims?)\b/i.test(text);
+    (HEADACHE_TOPIC.test(text) ||
+      /\b(?:respirator\w*|breath\w*|asthma|lungs?|bronch\w*|sinusitis|rhinitis|cancers?|illness|diseases?|medical|health|symptoms?|toxic|exposure|presumpt\w*|disabilit\w*|claims?)\b/i.test(text));
 }
 
 export function isSusanLukasResearchQuestion(question) {

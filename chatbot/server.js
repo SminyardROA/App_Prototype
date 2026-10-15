@@ -17,6 +17,7 @@ import { PINNED_SECTIONS, dd214PathwayChunkIds, dodFmrBahRequiredChunkIds, verif
 import { buildRetrievalQuery } from "./retrieval-query.js";
 import { queryKnowledgeIndex } from "./knowledge-search.js";
 import { vaCfrPlans, recoverCfrMatches } from "./va-cfr-retrieval.js";
+import { isSusanLukasResearchQuestion, SUSAN_LUKAS_DOCUMENT } from "./legislation-topics.js";
 import { isGeneralVaOpening, VA_OPENING_REPLY } from "./va-opening.js";
 import { verifiedUploadedSource, sourceQualityRank, sourceContext, canonicalSourceIdentity, sourceException } from "./source-provenance.js";
 import { sourcePackAuthentication, sourcePackHandler } from "./source-pack.js";
@@ -852,6 +853,33 @@ async function getKnowledgeBaseContext(
           return { matches: [] };
         }
       }));
+    let proposalMatches = [];
+    let proposalRecoveryFailed = false;
+    if (vaDisabilityQuestion && !lawCenterOnly && isSusanLukasResearchQuestion(evidenceQuestion)) {
+      const proposal = verifiedUploadedSource(SUSAN_LUKAS_DOCUMENT);
+      if (proposal) {
+        try {
+          const vector = await retrievalClient.embed(
+            "Susan E. Lukas Act H.R. 5339 proposed legislation eligibility cohort Pentagon September 11 VA health care disability compensation presumptions ROA testimony",
+          );
+          const identities = [proposal.originalSource, proposal.originalFilename, proposal.url];
+          const results = await queryKnowledgeIndex(retrievalClient, {
+            vector, topK: 12,
+            filter: { $or: [
+              { source: { $in: identities } }, { url: { $in: identities } },
+            ] },
+            signal: AbortSignal.timeout(10000),
+          });
+          proposalMatches = (results.matches || []).filter(match => {
+            const doc = sourceDocument(match);
+            return doc.legalStatus === "proposal-discussion" && doc.url === proposal.url;
+          });
+        } catch {
+          proposalRecoveryFailed = true;
+          console.warn("Targeted proposal recovery unavailable; continuing other member-source retrieval.");
+        }
+      }
+    }
     if (vaDisabilityQuestion) {
       const focusedVector = await retrievalClient.embed(focusedVaSearchQuery(evidenceQuestion));
       const focusedResults = await queryKnowledgeIndex(retrievalClient, {
@@ -1074,11 +1102,15 @@ async function getKnowledgeBaseContext(
     // The ordered candidates retain pinned FMR/DoDI priority, while the
     // distinct-source pass ensures mixed legal questions can reach both the
     // Law Center and official/general results.
-    const matches = selectDiverseMatches([...recoveredCfrMatches, ...rankedMatches], route.legal ? 12 : 10, match => {
+    const proposalPriority = proposalMatches.slice(0, 2);
+    const matches = selectDiverseMatches([...proposalPriority, ...recoveredCfrMatches, ...rankedMatches], route.legal ? 12 : 10, match => {
+      // Preserve two passages of this single document, not two independent
+      // authorities. Public source URLs and source counts remain canonical.
+      if (proposalPriority.some(candidate => candidate.id === match.id)) return `proposal-passage:${match.id}`;
       if (isDodFmrVolume7aMatch(match)) return normalizeSourceUrl(dodFmrVolume7aUrl);
       if (isDodi133601Match(match)) return normalizeSourceUrl(dodi133601Url);
       return sourceDocumentKey(match);
-    }, [...veteranDefinitionMatches.slice(0, 3), ...recoveredCfrMatches, ...focusedMatches,
+    }, [...proposalPriority, ...veteranDefinitionMatches.slice(0, 3), ...recoveredCfrMatches, ...focusedMatches,
       ...(route.legal && !lawCenterOnly ? generalCandidates.slice(0, 1) : [])]);
 
     const relevantMatches = matches;
@@ -1126,7 +1158,9 @@ async function getKnowledgeBaseContext(
       .filter((chunk, i, chunks) => chunks.findIndex(other =>
         other.url === chunk.url && other.text === chunk.text) === i);
 
-    const finalContext = allChunks
+    const finalContext = (proposalRecoveryFailed
+      ? "A targeted indexed-proposal lookup was unavailable. This is not evidence that the proposal is absent from the RAG. Explain what the supplied passages establish without claiming a complete index search.\n\n"
+      : "") + allChunks
       .map(sourceContext)
       .join("\n\n---\n\n");
 
@@ -1177,6 +1211,9 @@ async function getKnowledgeBaseContext(
         selectedChunks: allChunks.length,
         vaDisabilityEvidence: vaDisabilityQuestion,
         cfrRecoveredChunks: recoveredCfrMatches.length,
+        proposalRecoveredChunks: proposalMatches.length,
+        proposalSelectedChunks: allChunks.filter(doc => doc.legalStatus === "proposal-discussion").length,
+        proposalRecoveryFailed,
         cfrRecoveryFailures,
         ...(isShoulderRatingQuestion(question) ? {
           shoulderScheduleEvidence: allChunks.some(isOfficialShoulderSchedule),

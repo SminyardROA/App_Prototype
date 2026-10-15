@@ -34,6 +34,8 @@ test("the Pentagon respiratory question researches the proposal without requirin
     "I was at the Pentagon on September 11 and developed asthma. Could I file a claim?",
     "On 9/11 I served at the Pentagon. I have breathing problems.",
     "Pentagon, Sept. 11, 2001: respiratory illness and VA benefits?",
+    "I served at the Pentagon on 9/11 and have persistent headaches.",
+    "I was at the Pentagon on September 11 and now have migraines.",
   ]) {
     assert.equal(isPentagon911HealthQuestion(text), true, text);
     assert.equal(isVaDisabilityQuestion(text), true, text);
@@ -45,6 +47,76 @@ test("the Pentagon respiratory question researches the proposal without requirin
     assert.equal(isPentagon911HealthQuestion(text), false, text);
     assert.equal(isSusanLukasResearchQuestion(text), false, text);
   }
+});
+
+test("headache wording reaches the candidate migraine table without assuming a diagnosis", () => {
+  const plans = vaCfrPlans("What are the VA headache rating criteria?");
+  assert.ok(plans.some(plan => plan.code === "8100" && plan.section === "4.124a"));
+  const scoped = resolveVaDisabilityQuestion("What about headaches?", [
+    ...history, { role: "user", content: "I served in the Pentagon on 9/11 and have respiratory problems." },
+  ]);
+  assert.match(scoped.evidenceQuestion, /Pentagon.*9\/11/);
+  assert.doesNotMatch(scoped.evidenceQuestion, /shoulder|respiratory/i);
+  assert.equal(isSusanLukasResearchQuestion(scoped.evidenceQuestion), true);
+  const named = resolveVaDisabilityQuestion("What about headaches?", [
+    { role: "user", content: "Explain the Susan Lukas Act." },
+  ]);
+  assert.match(named.evidenceQuestion, /Susan Lukas Act/);
+  assert.doesNotMatch(named.evidenceQuestion, /I served|my service/i);
+  const exposure = resolveVaDisabilityQuestion("How does the Susan Lukas Act relate to headaches?", [
+    { role: "user", content: "I served at the Pentagon on 9/11 and have respiratory problems." },
+  ]);
+  assert.match(exposure.evidenceQuestion, /Pentagon.*9\/11/);
+  assert.doesNotMatch(exposure.evidenceQuestion, /respiratory/i);
+  const friend = resolveVaDisabilityQuestion("How does VA rate my friend's headaches?", [
+    { role: "user", content: "I served at the Pentagon on 9/11 and have respiratory problems." },
+  ]);
+  assert.doesNotMatch(friend.evidenceQuestion, /Pentagon|respiratory/i);
+});
+
+test("a source-specific lookup protects proposal passages alongside headache rules", async () => {
+  let targeted = 0;
+  const proposals = [proposal, { ...proposal, id: "proposal-details",
+    metadata: { ...proposal.metadata, text: "H.R. 5339 would extend VA health care and disability compensation to the proposed Pentagon cohort. It is proposed legislation." } }];
+  const migraine = { id: "migraine-table", score: 0.8, metadata: {
+    url: "https://www.ecfr.gov/current/title-38/part-4/section-4.124a",
+    section: "4.124a", text: "§ 4.124a Schedule of ratings. 8100 Migraine. Rating criteria for characteristic prostrating attacks.",
+  } };
+  const ordinary = Array.from({ length: 16 }, (_, i) => ({
+    id: `ordinary-${i}`, score: 0.99, metadata: {
+      url: `https://www.va.gov/disability/fixture-${i}`,
+      text: "VA disability headaches and claim evidence.",
+    },
+  }));
+  let unavailable = false;
+  const client = { indexHost: "fixture.invalid", embed: async () => [1],
+    fetch: async (_url, options) => {
+      const body = JSON.parse(options.body);
+      assert.equal(body.namespace, "");
+      if (body.filter?.$or) {
+        targeted++;
+        if (unavailable) throw new Error("synthetic private provider body");
+        return { ok: true, json: async () => ({ matches: proposals }) };
+      }
+      const matches = body.filter?.section?.$eq === "4.124a" ? [migraine] :
+        body.filter?.section?.$eq === "3.303" ? [framework] : ordinary;
+      return { ok: true, json: async () => ({ matches }) };
+    },
+  };
+  const text = "I served at the Pentagon on 9/11 and have headaches. What are the VA headache rating criteria?";
+  const options = { question: text, evidenceQuestion: text, retrievalClient: client };
+  const kb = await getKnowledgeBaseContext(text, options);
+  assert.equal(targeted, 1);
+  assert.equal(kb.retrieval.proposalSelectedChunks, 2);
+  assert.equal(kb.retrieval.proposalRecoveredChunks, 2);
+  assert.ok(kb.sourceDocuments.some(doc => /8100\s+Migraine/.test(doc.text)));
+  assert.ok(kb.sourceDocuments.some(doc => /3\.303/.test(doc.text)));
+  unavailable = true;
+  const limited = await getKnowledgeBaseContext(text, options);
+  assert.equal(limited.retrieval.proposalRecoveryFailed, true);
+  assert.match(limited.context, /not evidence.*absent/i);
+  assert.ok(limited.sourceDocuments.length > 0);
+  assert.doesNotMatch(limited.context, /synthetic private provider body/);
 });
 
 test("the current respiratory issue is researched while the earlier shoulder report remains in history", () => {

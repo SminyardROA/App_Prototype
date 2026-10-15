@@ -1,6 +1,6 @@
 import { isCfrTitle38Source, LIMB_LOSS_TOPIC } from "./injury-retrieval.js";
 import { cfrPart } from "./source-provenance.js";
-import { isPentagon911HealthQuestion } from "./legislation-topics.js";
+import { isPentagon911HealthQuestion, HEADACHE_TOPIC } from "./legislation-topics.js";
 
 // Retrieval hints only: these do not establish eligibility, percentages, or
 // whether a particular diagnostic code applies to a member.
@@ -34,7 +34,7 @@ const codes = [
   ["6260", "4.87", /6260\s+Tinnitus,\s+recurrent/i, /tinnitus|ringing in the ears/i],
   ["6847", "4.97", /6847\s+Sleep apnea/i, /sleep apnea/i],
   ["7913", "4.119", /7913\s+Diabetes mellitus/i, /diabetes/i],
-  ["8100", "4.124a", /8100\s+Migraine/i, /migraines?/i],
+  ["8100", "4.124a", /8100\s+Migraine/i, HEADACHE_TOPIC],
   ["7101", "4.104", /7101\s+Hypertensive vascular disease/i, /hypertension/i],
 ];
 const vaContext = /\b(?:VA|veterans?|disability|service[- ]connect\w*)\b|38\s*C\.?F\.?R\.?|\bdiagnostic codes?\b|\bDCs?\s*#?\s*\d{4}\b/i;
@@ -54,7 +54,7 @@ export function vaCfrPlans(question) {
   const namedRatingCode = /\b(?:criteria|published|rating|ratings)\b/i.test(text) &&
     codes.some(([code]) => new RegExp(`\\b${code}\\b`).test(text));
   const medicalRating = /rating|criteria|schedule|percentage/i.test(text) &&
-    /mental health|mental.disorder|hearing loss/i.test(text);
+    (/mental health|mental.disorder|hearing loss/i.test(text) || HEADACHE_TOPIC.test(text));
   const pentagonHealth = isPentagon911HealthQuestion(text);
   const limbLoss = LIMB_LOSS_TOPIC.test(text);
   if (!vaContext.test(text) && !namedRatingCode && !medicalRating && !pentagonHealth && !limbLoss) return [];
@@ -90,7 +90,7 @@ export function vaCfrPlans(question) {
     add({ key: `code-${code}`, section: range[2], code,
       // For codes without a hand-checked label, require a capitalized table
       // entry, not "under code 7522", a comma-separated list, or "7522 or...".
-      // This is retrieval evidence only; final claims still need entailment.
+      // This is retrieval evidence only, not a diagnosis or personal rating.
       required: code === "6100" ? undefined : new RegExp(`\\b${code}\\s+[A-Z][a-z]`) });
   }
   for (const [section, pattern, preferred] of topics) {
