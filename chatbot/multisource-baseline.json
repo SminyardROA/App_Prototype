@@ -1,0 +1,355 @@
+{
+  "version": 1,
+  "note": "Synthetic member questions. Authority URL patterns are hypotheses to audit, not proof of answer correctness. ROA insurance guidance currently lives in the prompt, not necessarily the vector index.",
+  "cases": [
+    {
+      "id": "insurance-federal-navy",
+      "question": "I'm a federal civilian employee and in the Navy Reserve. What are my insurance options for health and life coverage while drilling? Include any ROA-sponsored options.",
+      "chatMode": "benefits",
+      "authorities": [
+        {"name": "TRICARE Reserve Select federal civilian/FEHB eligibility", "urlPattern": "tricare\\.mil|opm\\.gov|health\\.mil"},
+        {"name": "SGLI eligibility for reservists", "urlPattern": "va\\.gov|benefits\\.va\\.gov"},
+        {"name": "ROA ReserveCare / AMBA products", "urlPattern": "roainsure\\.com"}
+      ],
+      "answerChecks": [
+        {"name": "TRS restriction for federal civilian employee", "pattern": "(TRS|TRICARE Reserve Select)[\\s\\S]{0,250}(ineligible|not eligible|cannot|can't|prohibit|barred)|(?:ineligible|not eligible|cannot|can't|prohibit|barred)[\\s\\S]{0,250}(TRS|TRICARE Reserve Select)"},
+        {"name": "FEHB", "pattern": "FEHB|Federal Employees Health Benefits"},
+        {"name": "current restriction end-date caveat", "pattern": "2030|2029"},
+        {"name": "SGLI", "pattern": "\\bSGLI\\b|Servicemembers.? Group Life"},
+        {"name": "ROA insurance link", "pattern": "roainsure\\.com"},
+        {"name": "ROA dental/vision options", "pattern": "dental|vision"},
+        {"name": "ROA life insurance option", "pattern": "life insurance"}
+      ],
+      "review": "Confirm eligibility caveat is tied to FEHB eligibility, not merely FEHB enrollment; confirm current effective-date exception with TRICARE. SGLI is life insurance, not health coverage; ROA products must not be presented as TRICARE or FEHB."
+    },
+    {
+      "id": "insurance-federal-not-enrolled",
+      "question": "I drill in the Army Reserve and work for a federal agency, but I declined FEHB. Can I buy TRICARE Reserve Select instead, and what health or life insurance alternatives do I have?",
+      "chatMode": "benefits",
+      "authorities": [
+        {"name": "TRICARE federal civilian eligibility", "urlPattern": "tricare\\.mil|health\\.mil"},
+        {"name": "FEHB eligibility versus enrollment", "urlPattern": "opm\\.gov"},
+        {"name": "ROA insurance options", "urlPattern": "roainsure\\.com"}
+      ],
+      "answerChecks": [
+        {"name": "FEHB/eligibility distinction", "pattern": "FEHB|federal civilian"},
+        {"name": "TRS not simply available because FEHB declined", "pattern": "not eligible|ineligible|cannot|can't|prohibit|eligib"},
+        {"name": "ROA insurance", "pattern": "roainsure\\.com"}
+      ]
+    },
+    {
+      "id": "insurance-mobilization",
+      "question": "I'm a Navy Reservist with a spouse and child. How does our health coverage change before, during, and after mobilization, and what happens to SGLI and optional ROA insurance?",
+      "chatMode": "benefits",
+      "authorities": [
+        {"name": "TRICARE mobilization and family eligibility", "urlPattern": "tricare\\.mil|health\\.mil"},
+        {"name": "SGLI", "urlPattern": "va\\.gov|benefits\\.va\\.gov"},
+        {"name": "ROA-sponsored insurance", "urlPattern": "roainsure\\.com"}
+      ],
+      "answerChecks": [
+        {"name": "TRICARE", "pattern": "TRICARE"},
+        {"name": "SGLI", "pattern": "\\bSGLI\\b"},
+        {"name": "ROA plans", "pattern": "roainsure\\.com"}
+      ]
+    },
+    {
+      "id": "insurance-grey-area",
+      "question": "I have 20 qualifying Reserve years, am 55, and draw reduced-age retired pay. Can I get regular retiree TRICARE now, and what medical or life coverage could bridge the gap?",
+      "chatMode": "benefits",
+      "authorities": [
+        {"name": "Reduced-age retired pay rule", "urlPattern": "law\\.cornell\\.edu|congress\\.gov|dfas\\.mil|mil"},
+        {"name": "TRICARE Retired Reserve and age 60", "urlPattern": "tricare\\.mil"},
+        {"name": "ROA-sponsored insurance", "urlPattern": "roainsure\\.com"}
+      ],
+      "answerChecks": [
+        {"name": "TRR", "pattern": "TRICARE Retired Reserve|\\bTRR\\b"},
+        {"name": "age 60 distinction", "pattern": "age 60|until 60|at 60"},
+        {"name": "ROA insurance", "pattern": "roainsure\\.com"}
+      ]
+    },
+    {
+      "id": "legal-userra-scra",
+      "question": "I'm in the Army Reserve. After my mobilization, my employer says my position is gone; I also need to end my apartment lease for the orders. What different protections should I check?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "USERRA reemployment", "urlPattern": "userra|reemploy|dol\\.gov"},
+        {"name": "SCRA lease termination", "urlPattern": "scra|lease|justice\\.gov"}
+      ],
+      "answerChecks": [
+        {"name": "USERRA", "pattern": "USERRA|reemploy"},
+        {"name": "SCRA", "pattern": "SCRA|Servicemembers Civil Relief"},
+        {"name": "lease", "pattern": "lease"}
+      ]
+    },
+    {
+      "id": "legal-federal-userra-leave",
+      "question": "I am a federal civilian employee and a Navy Reservist going on orders. How do USERRA reemployment rights and federal military leave/pay rules interact?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "USERRA / federal reemployment", "urlPattern": "userra|dol\\.gov|opm\\.gov"},
+        {"name": "Federal civilian military leave/pay", "urlPattern": "opm\\.gov|military.leave|5usc"}
+      ],
+      "answerChecks": [
+        {"name": "USERRA", "pattern": "USERRA"},
+        {"name": "military leave or federal pay distinction", "pattern": "military leave|civilian pay|federal pay|leave"}
+      ]
+    },
+    {
+      "id": "legal-scra-credit-lease",
+      "question": "My Guard activation affects both my car loan interest and my apartment lease. Are the SCRA rules identical for both, and what notices or documents should I send?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "SCRA interest protection", "urlPattern": "scra|interest|justice\\.gov"},
+        {"name": "SCRA lease termination", "urlPattern": "lease|scra|justice\\.gov"}
+      ],
+      "answerChecks": [
+        {"name": "loan interest", "pattern": "interest|loan"},
+        {"name": "lease", "pattern": "lease"},
+        {"name": "orders/notice", "pattern": "orders|notice"},
+        {"name": "correct lease section", "pattern": "(?:§|section|U\\.S\\.C\\.)\\s*3955"},
+        {"name": "correct pre-service interest section", "pattern": "(?:§|section|U\\.S\\.C\\.)\\s*3937"},
+        {"name": "no incorrect lease section", "pattern": "(?:§|section|U\\.S\\.C\\.)\\s*3956", "forbidden": true},
+        {"name": "no blanket Title 32 exclusion", "pattern": "Title\\s*32[\\s\\S]{0,140}(?:(?:(?:does|do|is|are)\\s+not|doesn't|cannot|not)\\s+(?:apply|qualify|cover(?:ed)?|eligible)|\\b(?:ineligible|excluded)\\b)|SCRA[\\s\\S]{0,100}only\\s+(?:applies|covers)\\s+(?:to\\s+)?Title\\s*10", "forbidden": true}
+      ]
+    },
+    {
+      "id": "scra-guard-qualifying-lease",
+      "question": "I am a National Guard member on 45 consecutive days of federally funded Title 32 § 502(f) orders authorized by the Secretary of Defense to respond to a President-declared national emergency. I signed my apartment lease before service. Can I end it under the SCRA and what should I send?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "SCRA covered Guard service", "urlPattern": "uscode\\.house\\.gov.*3911"},
+        {"name": "SCRA residential lease termination", "urlPattern": "uscode\\.house\\.gov.*3955"}
+      ],
+      "answerChecks": [
+        {"name": "lease section", "pattern": "(?:§|section|U\\.S\\.C\\.)\\s*3955"},
+        {"name": "conditional Title 32 coverage", "pattern": "Title\\s*32[\\s\\S]{0,300}(?:502\\(f\\)|qualif|cover)|502\\(f\\)[\\s\\S]{0,300}(?:qualif|cover)"},
+        {"name": "lease notice and orders", "pattern": "written notice[\\s\\S]{0,220}orders|orders[\\s\\S]{0,220}written notice"},
+        {"name": "no wrong lease citation", "pattern": "(?:§|section|U\\.S\\.C\\.)\\s*3956", "forbidden": true},
+        {"name": "no blanket Guard exclusion", "pattern": "Title\\s*32[\\s\\S]{0,140}(?:(?:(?:does|do|is|are)\\s+not|doesn't|cannot|not)\\s+(?:apply|qualify|cover(?:ed)?|eligible)|\\b(?:ineligible|excluded)\\b)", "forbidden": true}
+      ]
+    },
+    {
+      "id": "scra-guard-routine-lease",
+      "question": "I'm a Guard member on routine federally funded Title 32 § 502(f) training orders for 14 days, not a President-declared national emergency. I signed my apartment lease before these orders. Does federal funding alone let me terminate under SCRA?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "SCRA covered Guard service", "urlPattern": "uscode\\.house\\.gov.*3911"},
+        {"name": "SCRA residential lease termination", "urlPattern": "uscode\\.house\\.gov.*3955"}
+      ],
+      "answerChecks": [
+        {"name": "lease section", "pattern": "(?:§|section|U\\.S\\.C\\.)\\s*3955"},
+        {"name": "funding alone insufficient", "pattern": "(?:funding|funded)[^.!?\\n]{0,100}(?:not\\s+(?:enough|sufficient)|insufficient|alone\\s+(?:is|does)\\s+not\\s+(?:enough|sufficient|qualify|establish)|doesn't\\s+(?:qualify|establish))|(?:not\\s+(?:enough|sufficient)|insufficient)[^.!?\\n]{0,100}(?:funding|funded)"},
+        {"name": "qualifying exception explained", "pattern": "502\\(f\\)|30 consecutive|national emergency"},
+        {"name": "no wrong lease citation", "pattern": "(?:§|section|U\\.S\\.C\\.)\\s*3956", "forbidden": true},
+        {"name": "no blanket Guard exclusion", "pattern": "Title\\s*32[\\s\\S]{0,140}(?:(?:(?:does|do|is|are)\\s+not|doesn't|cannot|not)\\s+(?:apply|qualify|cover(?:ed)?|eligible)|\\b(?:ineligible|excluded)\\b)", "forbidden": true}
+      ]
+    },
+    {
+      "id": "scra-guard-qualifying-loan",
+      "question": "I have a car loan from before service and am on 45 consecutive days of federally funded Title 32 § 502(f) National Guard duty authorized by the President for a President-declared national emergency. Can the SCRA interest cap apply and what should I provide the lender?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "SCRA covered Guard service", "urlPattern": "uscode\\.house\\.gov.*3911"},
+        {"name": "SCRA pre-service debt interest", "urlPattern": "uscode\\.house\\.gov.*3937"}
+      ],
+      "answerChecks": [
+        {"name": "interest section", "pattern": "(?:§|section|U\\.S\\.C\\.)\\s*3937"},
+        {"name": "six percent interest cap", "pattern": "6\\s*%|six percent"},
+        {"name": "notice and proof", "pattern": "notice[\\s\\S]{0,200}(?:orders|proof)|(?:orders|proof)[\\s\\S]{0,200}notice"},
+        {"name": "no blanket Guard exclusion", "pattern": "Title\\s*32[\\s\\S]{0,140}(?:(?:(?:does|do|is|are)\\s+not|doesn't|cannot|not)\\s+(?:apply|qualify|cover(?:ed)?|eligible)|\\b(?:ineligible|excluded)\\b)", "forbidden": true}
+      ]
+    },
+    {
+      "id": "scra-guard-routine-loan",
+      "question": "My car loan predates service, but my National Guard orders are routine federally funded Title 32 § 502(f) training for 14 days, not for a President-declared national emergency. Does federal funding alone qualify me for the SCRA loan interest cap?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "SCRA covered Guard service", "urlPattern": "uscode\\.house\\.gov.*3911"},
+        {"name": "SCRA pre-service debt interest", "urlPattern": "uscode\\.house\\.gov.*3937"}
+      ],
+      "answerChecks": [
+        {"name": "interest section", "pattern": "(?:§|section|U\\.S\\.C\\.)\\s*3937"},
+        {"name": "funding alone insufficient", "pattern": "(?:funding|funded)[^.!?\\n]{0,100}(?:not\\s+(?:enough|sufficient)|insufficient|alone\\s+(?:is|does)\\s+not\\s+(?:enough|sufficient|qualify|establish)|doesn't\\s+(?:qualify|establish))|(?:not\\s+(?:enough|sufficient)|insufficient)[^.!?\\n]{0,100}(?:funding|funded)"},
+        {"name": "qualifying exception explained", "pattern": "502\\(f\\)|30 consecutive|national emergency"},
+        {"name": "no blanket Guard exclusion", "pattern": "Title\\s*32[\\s\\S]{0,140}(?:(?:(?:does|do|is|are)\\s+not|doesn't|cannot|not)\\s+(?:apply|qualify|cover(?:ed)?|eligible)|\\b(?:ineligible|excluded)\\b)", "forbidden": true}
+      ]
+    },
+    {
+      "id": "separation-navy-enlisted",
+      "question": "As a drilling Navy Reserve enlisted sailor facing administrative separation, how do Navy procedures and DoD-wide enlisted separation policy both affect notice and my opportunity to respond?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "Navy MILPERSMAN 1910 series", "urlPattern": "mynavyhr\\.navy\\.mil.*1910"},
+        {"name": "DoDI 1332.14", "urlPattern": "esd\\.whs\\.mil.*133214p"}
+      ],
+      "answerChecks": [
+        {"name": "Navy rule", "pattern": "MILPERSMAN|Navy"},
+        {"name": "DoD rule", "pattern": "DoDI|DoD"},
+        {"name": "notice or response", "pattern": "notice|respond|rebut"}
+      ]
+    },
+    {
+      "id": "separation-army-officer",
+      "question": "I am an Army Reserve officer under consideration for elimination. How do the Army officer separation rules and DoD commissioned-officer policy fit together?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "Army Reserve officer separation / AR 135-175 or AR 600-8-24 as applicable", "urlPattern": "armypubs\\.army\\.mil|ar_135-175|ar_600-8-24"},
+        {"name": "DoDI 1332.30", "urlPattern": "esd\\.whs\\.mil.*133230p"}
+      ],
+      "answerChecks": [
+        {"name": "Army authority", "pattern": "Army|AR 135-175|AR 600-8-24"},
+        {"name": "DoD authority", "pattern": "DoD|DoDI"}
+      ],
+      "review": "Check active-duty versus Reserve status before applying AR 600-8-24; do not merge enlisted and officer authorities."
+    },
+    {
+      "id": "separation-air-force",
+      "question": "I'm an Air Force Reserve enlisted member facing separation. What does the Air Force instruction say, and which DoD policy also governs the process?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "DAFI 36-3211", "urlPattern": "dafi36-3211"},
+        {"name": "DoDI 1332.14", "urlPattern": "133214p"}
+      ],
+      "answerChecks": [
+        {"name": "Air Force", "pattern": "Air Force|DAFI"},
+        {"name": "DoD", "pattern": "DoDI|DoD"}
+      ]
+    },
+    {
+      "id": "pay-idt-travel",
+      "question": "My Reserve unit is far from home. How should I distinguish my IDT drill pay from any possible travel or lodging reimbursement?",
+      "chatMode": "pay",
+      "authorities": [
+        {"name": "JTR IDT travel", "urlPattern": "jtr\\.pdf|travel\\.dod\\.mil"},
+        {"name": "DoD FMR Reserve pay", "urlPattern": "comptroller\\.defense\\.gov|fmr|volume7a"}
+      ],
+      "answerChecks": [
+        {"name": "IDT", "pattern": "IDT|drill"},
+        {"name": "travel separate from pay", "pattern": "travel|lodging|reimburse"}
+      ]
+    },
+    {
+      "id": "pay-bah-jtr",
+      "question": "I'm a Guard member on 20-day annual training away from home. Which BAH rule applies and is travel lodging under the JTR the same entitlement?",
+      "chatMode": "pay",
+      "authorities": [
+        {"name": "DoD FMR Volume 7A BAH", "urlPattern": "comptroller\\.defense\\.gov|fmr|volume7a"},
+        {"name": "JTR lodging and travel", "urlPattern": "jtr\\.pdf|travel\\.dod\\.mil"}
+      ],
+      "answerChecks": [
+        {"name": "BAH", "pattern": "BAH"},
+        {"name": "travel distinction", "pattern": "JTR|lodging|per diem|travel"}
+      ]
+    },
+    {
+      "id": "pay-va-drill",
+      "question": "I receive VA disability compensation and also drill monthly in the Marine Corps Reserve. Can I receive both payments, and what days do I need to reconcile?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "VA military pay waiver / election", "urlPattern": "va\\.gov|benefits\\.va\\.gov"},
+        {"name": "Reserve drill pay", "urlPattern": "comptroller\\.defense\\.gov|dfas\\.mil|fmr"}
+      ],
+      "answerChecks": [
+        {"name": "VA", "pattern": "VA|disability"},
+        {"name": "per-day election", "pattern": "days|day|waiv|elect"}
+      ]
+    },
+    {
+      "id": "education-1606-33",
+      "question": "I drill in the Navy Reserve and have never deployed. Do my Selected Reserve GI Bill benefits automatically give me Post-9/11 GI Bill benefits too?",
+      "chatMode": "benefits",
+      "authorities": [
+        {"name": "VA MGIB-SR Chapter 1606", "urlPattern": "va\\.gov|benefits\\.va\\.gov"},
+        {"name": "VA Post-9/11 GI Bill Chapter 33", "urlPattern": "va\\.gov|benefits\\.va\\.gov"}
+      ],
+      "answerChecks": [
+        {"name": "1606", "pattern": "1606|MGIB-SR|Selected Reserve"},
+        {"name": "Post-9/11", "pattern": "Post-9/11|Chapter 33"},
+        {"name": "not automatic", "pattern": "not automatic|does not automatically|doesn't automatically|qualifying active"}
+      ],
+      "review": "Both authorities may share a domain: check article/page identity, not merely distinct hostnames."
+    },
+    {
+      "id": "education-transfer",
+      "question": "I'm leaving the Air National Guard next month. Can I wait until after separation to transfer my Post-9/11 GI Bill to my child, and what service rules should I check now?",
+      "chatMode": "benefits",
+      "authorities": [
+        {"name": "VA Post-9/11 benefit", "urlPattern": "va\\.gov|benefits\\.va\\.gov"},
+        {"name": "DoD transfer-of-education-benefits rules", "urlPattern": "milconnect\\.dmdc\\.osd\\.mil|defense\\.gov|esd\\.whs\\.mil"}
+      ],
+      "answerChecks": [
+        {"name": "transfer before separation", "pattern": "before.*separat|while.*serv|cannot.*after"},
+        {"name": "Post-9/11", "pattern": "Post-9/11|GI Bill"}
+      ]
+    },
+    {
+      "id": "retirement-points-years",
+      "question": "I have lots of Guard retirement points but fewer than 20 qualifying years. Can my point total alone make me eligible for Reserve retired pay?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "Reserve non-regular retirement eligibility", "urlPattern": "dfas\\.mil|esd\\.whs\\.mil|law\\.cornell\\.edu|congress\\.gov"},
+        {"name": "Point accounting", "urlPattern": "121506p|dfas\\.mil|mil"}
+      ],
+      "answerChecks": [
+        {"name": "points", "pattern": "points"},
+        {"name": "qualifying years", "pattern": "qualifying years|good years|20 years"}
+      ]
+    },
+    {
+      "id": "retirement-crdp-crsc",
+      "question": "I'm a retired Reservist with a VA disability rating and combat-related injuries. Are CRDP and CRSC the same program, and can I collect both at once?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "DFAS CRDP", "urlPattern": "dfas\\.mil.*crdp|dfas\\.mil.*concurrent"},
+        {"name": "DFAS CRSC", "urlPattern": "dfas\\.mil.*crsc|dfas\\.mil.*combat"}
+      ],
+      "answerChecks": [
+        {"name": "CRDP", "pattern": "CRDP"},
+        {"name": "CRSC", "pattern": "CRSC"},
+        {"name": "distinct election", "pattern": "different|separate|not.*same|choose|elect|not.*both"}
+      ]
+    },
+    {
+      "id": "transition-214-1",
+      "question": "I am leaving the Army Reserve and have a DD Form 214 from a prior deployment. Will a DD Form 214-1 replace it, and how do Reserve points get documented?",
+      "chatMode": "transition",
+      "authorities": [
+        {"name": "DoDI 1336.01 DD Form 214-1", "urlPattern": "133601p"},
+        {"name": "DoDI 1215.06 Reserve points", "urlPattern": "121506p"}
+      ],
+      "answerChecks": [
+        {"name": "staged intake first turn", "pattern": "DD Form 214-1|DD 214-1"}
+      ],
+      "review": "First response is intentionally only the awareness question. A full two-authority answer requires continuing the pathway; do not count the first-turn absence of points details as an accuracy failure."
+    },
+    {
+      "id": "transition-sgli-health",
+      "question": "My Guard separation is approaching. Which SGLI conversion deadline and health coverage bridge should I review before I lose current benefits?",
+      "chatMode": "benefits",
+      "authorities": [
+        {"name": "VA SGLI conversion", "urlPattern": "va\\.gov|benefits\\.va\\.gov"},
+        {"name": "TRICARE transition coverage / TAMP", "urlPattern": "tricare\\.mil"},
+        {"name": "ROA-sponsored insurance", "urlPattern": "roainsure\\.com"}
+      ],
+      "answerChecks": [
+        {"name": "SGLI", "pattern": "SGLI|VGLI"},
+        {"name": "health bridge", "pattern": "TAMP|TRICARE|COBRA|marketplace"},
+        {"name": "ROA insurance", "pattern": "roainsure\\.com"}
+      ],
+      "review": "Separation triggers DD Form 214-1 staged intake; confirm the bot does not give an unsupported coverage deadline on the first turn."
+    },
+    {
+      "id": "legal-harassment-separation",
+      "question": "I'm a Marine Corps Reservist facing separation after reporting harassment. How do DoD harassment policy and the service separation manual affect what I should document?",
+      "chatMode": "general",
+      "authorities": [
+        {"name": "DoDI 1020.03 harassment prevention", "urlPattern": "102003p"},
+        {"name": "MCO 1900.16 separation", "urlPattern": "1900\\.16"}
+      ],
+      "answerChecks": [
+        {"name": "report/documentation", "pattern": "report|document|record"},
+        {"name": "harassment", "pattern": "harass"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "url": "https://assets.roa.org/wp-content/uploads/2026/10/LR26076votedayminardedtis.pdf",
+    "verificationStatus": "indexed-only",
+    "note": "The indexed source URL returned HTTP 403 during public-document verification. Preserve indexed evidence, but do not claim that the public document or its current status was verified."
+  },
+  {
+    "url": "https://assets.roa.org/wp-content/uploads/2025/12/11010-LR.pdf",
+    "verificationStatus": "identity-conflict",
+    "note": "The actual PDF header says LAW REVIEW 1110, while the indexed URL says 11010. No publication date was verified. Do not infer article identity or current law from this filename."
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "name": "roa-chatbot",
+  "version": "1.0.0",
+  "description": "ROA Chatbot backend server",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test *.test.js",
+    "beta-test": "node beta-test.js",
+    "beta-test:100": "node simulated-member-beta.js",
+    "beta-test:critical": "BETA_RISK=critical node simulated-member-beta.js",
+    "baseline:multisource": "node multisource-baseline.js",
+    "evaluate:va-retrieval": "node evaluate-va-retrieval.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@pinecone-database/pinecone": "^5.1.2",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "pdf2json": "^4.0.3",
+    "pg": "^8.23.0",
+    "voyageai": "^0.2.1"
+  }
+}

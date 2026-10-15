@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" href="data:," />
+  <title>Reserve Connect AI — Test Page</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f4f4f4;
+    }
+
+    /* Fake ROA navigation bar */
+    .fake-nav {
+      background: #003876;
+      color: white;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .fake-nav .logo {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .fake-nav a {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    /* Fake page content */
+    .hero {
+      background: white;
+      padding: 60px 32px;
+      text-align: center;
+      border-bottom: 3px solid #C8102E;
+    }
+    .hero h1 {
+      color: #003876;
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+    .hero p {
+      color: #555;
+      font-size: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .content {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 32px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .card h3 { color: #003876; margin-top: 0; }
+    .card p  { color: #666; font-size: 14px; line-height: 1.6; }
+
+    .test-banner {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      color: #856404;
+      text-align: center;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Test mode warning banner -->
+  <div class="test-banner">
+    🧪 RESERVE CONNECT AI — TEST PAGE — Not the live ROA.org website
+  </div>
+
+  <!-- Fake ROA nav -->
+  <div class="fake-nav">
+    <img src="/logo.png" alt="Reserve Connect AI" style="height:36px;width:auto;vertical-align:middle;">
+    <a href="#">About</a>
+    <a href="#">Programs</a>
+    <a href="#">Benefits</a>
+    <a href="#">Membership</a>
+    <a href="#">Contact</a>
+  </div>
+
+  <!-- Fake hero section -->
+  <div class="hero">
+    <h1>Supporting America's Reserve Component</h1>
+    <p>ROA advocates for a strong national defense and supports the education,
+    fitness, health, family life, and employment of Reserve Component members.</p>
+  </div>
+
+  <!-- Fake content cards -->
+  <div class="content">
+    <div class="card">
+      <h3>📚 Education Programs</h3>
+      <p>Scholarships, tuition assistance, and professional development
+      resources for Reserve Component members and their families.</p>
+    </div>
+    <div class="card">
+      <h3>💼 Employment Resources</h3>
+      <p>Career transition support, employer partnership programs,
+      and USERRA rights guidance for reservists.</p>
+    </div>
+    <div class="card">
+      <h3>🏥 Health & Benefits</h3>
+      <p>TRICARE information, mental health resources, and benefit
+      summaries for Reserve Component members.</p>
+    </div>
+    <div class="card">
+      <h3>👨‍👩‍👧 Family Support</h3>
+      <p>Resources and programs designed to support military families
+      during deployment and throughout service.</p>
+    </div>
+    <div class="card">
+      <h3>⚖️ Legal Resources</h3>
+      <p>U.S. Code references, DoD policy guidance, and legal
+      assistance information for Reserve members.</p>
+    </div>
+    <div class="card">
+      <h3>🏋️ Fitness Programs</h3>
+      <p>Physical fitness resources, wellness programs, and readiness
+      support for Reserve Component members.</p>
+    </div>
+  </div>
+
+  <!-- The actual chatbot widget -->
+  <script src="/widget.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:," />
+  <title>ReserveConnect Navigator</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Slab:wght@500;600&display=swap");
+
+    :root {
+      --rc-red: #B61D30;
+      --rc-blue: #01225E;
+      --rc-steel: #849CC1;
+      --rc-ink: #01225E;
+      --rc-paper: #fbfcfe;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--rc-ink);
+      font-family: "Roboto", sans-serif;
+      background:
+        radial-gradient(circle at 16% 18%, rgba(132, 156, 193, .22), transparent 30%),
+        linear-gradient(135deg, #f1f5fa 0%, #e8eef6 54%, #dce6f1 100%);
+    }
+
+    .rc-surface {
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+      padding: clamp(18px, 5vw, 56px);
+    }
+
+    .rc-surface::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: .26;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(1, 34, 94, .06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(1, 34, 94, .06) 1px, transparent 1px);
+      background-size: 36px 36px;
+    }
+
+    .rc-context {
+      position: relative;
+      max-width: 660px;
+      padding: clamp(12px, 4vw, 42px);
+    }
+
+    .rc-context-kicker {
+      color: var(--rc-red);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .rc-context h1 {
+      max-width: 530px;
+      margin: 16px 0 14px;
+      color: var(--rc-blue);
+      font-family: "Roboto Slab", serif;
+      font-size: clamp(28px, 4vw, 48px);
+      line-height: 1.05;
+      font-weight: 600;
+    }
+
+    .rc-context p {
+      max-width: 430px;
+      margin: 0;
+      color: #52657e;
+      line-height: 1.65;
+    }
+
+    .rc-rule {
+      width: 100px;
+      height: 4px;
+      margin-top: 38px;
+      border-radius: 4px;
+      background: var(--rc-red);
+    }
+
+    .rc-widget {
+      position: absolute;
+      z-index: 2;
+      top: clamp(20px, 5vw, 56px);
+      right: clamp(18px, 5vw, 56px);
+      width: min(600px, calc(100% - 36px));
+      height: min(840px, calc(100dvh - 64px));
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(1, 34, 94, .14);
+      border-radius: 18px;
+      background: var(--rc-paper);
+      box-shadow: 0 22px 60px rgba(1, 34, 94, .22), 0 4px 12px rgba(1, 34, 94, .08);
+      animation: rc-rise .55s ease both;
+      font-size: 16px;
+    }
+
+    .rc-widget.is-hidden { display: none; }
+
+    .rc-header {
+      min-height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px 0 20px;
+      color: white;
+      background: var(--rc-blue);
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .rc-header-title {
+      color: white;
+      font-family: "Roboto Slab", serif;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -.01em;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .rc-close,
+    .rc-launcher {
+      display: grid;
+      place-items: center;
+      border: 0;
+      color: white;
+      cursor: pointer;
+    }
+
+    .rc-close {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .1);
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .rc-close:hover { background: rgba(255, 255, 255, .2); }
+    .rc-crisis-pin {
+      display: none;
+      padding: 8px 14px;
+      border-bottom: 1px solid #cbd7e5;
+      color: #01225e;
+      background: #fff7f1;
+      font: 600 14px/1.4 "Roboto", sans-serif;
+      flex-shrink: 0;
+    }
+    .rc-crisis-pin.is-visible { display: block; }
+    .rc-crisis-pin a { color: #8e1726; text-decoration: underline; }
+    .rc-privacy-note {
+      margin: 0;
+      padding: 9px 14px;
+      background: #eaf0f8;
+      color: #01225e;
+      border-bottom: 1px solid #cbd7e5;
+      font: 14px/1.45 "Roboto", sans-serif;
+      flex-shrink: 0;
+    }
+    .rc-privacy-note summary { cursor: pointer; font-weight: 600; }
+    .rc-privacy-note p { margin: 8px 0 0; }
+    .rc-privacy-note a { color: #b61d30; text-decoration: underline; }
+    .rc-clear { margin-left: auto; margin-right: 10px; background: transparent; color: white;
+      border: 1px solid rgba(255,255,255,.5); border-radius: 7px; min-height: 44px; padding: 8px; cursor: pointer; font: 14px Roboto,sans-serif; }
+    .rc-signup { align-self: stretch; border-radius: 12px; border: 1px solid #cbd7e5;
+      border-left: 3px solid var(--rc-red); background: #f3f6fa; padding: 16px; color: var(--rc-blue); margin: 10px 0; }
+    .rc-signup h2 { font: 600 17px "Roboto Slab",serif; margin: 0 0 6px; }
+    .rc-signup p { font: 14px/1.45 Roboto,sans-serif; }
+    .rc-signup p { margin: 0 0 9px; }
+    .rc-signup .rc-invite-option { margin: 0 0 12px; }
+    .rc-signup a { color: var(--rc-blue); font-weight: 700; text-decoration: underline; }
+    .rc-signup button { background: var(--rc-blue); color: white; border: 1px solid var(--rc-blue);
+      border-radius: 7px; min-height: 44px; padding: 8px 12px; cursor: pointer; }
+    .rc-signup button.rc-later { background: white; color: var(--rc-blue); }
+
+    .rc-ai-notice {
+      align-self: stretch;
+      border: 1px solid #cad5e2;
+      border-left: 3px solid var(--rc-steel);
+      border-radius: 9px;
+      padding: 6px 8px;
+      color: #243850;
+      background: #eef3f9;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+    .rc-ai-label {
+      flex: 0 0 100%;
+      align-self: center;
+      color: #52657e;
+      font: 600 12px/1.3 "Roboto", sans-serif;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .rc-crisis-card {
+      align-self: stretch;
+      border: 2px solid #8e1726;
+      border-radius: 12px;
+      padding: 15px;
+      color: #1d2d40;
+      background: #fff7f1;
+      font-size: 15px;
+      line-height: 1.5;
+      box-shadow: 0 3px 10px rgba(1, 34, 94, .1);
+    }
+    .rc-crisis-card h2 {
+      margin: 0 0 6px;
+      color: #781321;
+      font: 700 17px/1.35 "Roboto Slab", serif;
+    }
+    .rc-crisis-card h3 {
+      margin: 16px 0 3px;
+      color: var(--rc-blue);
+      font: 700 15px/1.4 "Roboto", sans-serif;
+    }
+    .rc-crisis-card p { margin: 5px 0; }
+    .rc-crisis-card ul { margin: 5px 0 9px; padding-left: 20px; }
+    .rc-crisis-card li { margin: 3px 0; }
+    .rc-crisis-card a { color: #761522; font-weight: 700; text-decoration: underline; }
+    .rc-crisis-card a:focus-visible { outline: 3px solid var(--rc-blue); outline-offset: 2px; }
+    .rc-redaction-note {
+      align-self: stretch;
+      border: 1px solid #cbd7e5;
+      border-radius: 8px;
+      padding: 9px 11px;
+      color: #34465d;
+      background: #fff;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .rc-messages {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      overflow: auto;
+      padding: 8px 16px 13px;
+      background: #f3f6fa;
+    }
+
+    .rc-msg {
+      max-width: 88%;
+      padding: 11px 13px;
+      border-radius: 13px;
+      font-size: 16px;
+      line-height: 1.52;
+      overflow-wrap: anywhere;
+      animation: rc-fade .3s ease both;
+    }
+
+    .rc-msg.bot {
+      align-self: flex-start;
+      border: 1px solid #e3eaf2;
+      border-bottom-left-radius: 4px;
+      color: var(--rc-ink);
+      background: white;
+      box-shadow: 0 2px 6px rgba(1, 34, 94, .06);
+    }
+
+    .rc-msg.user {
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+      color: white;
+      background: var(--rc-blue);
+    }
+
+    .rc-msg p { margin: 0 0 7px; }
+    .rc-msg p:last-child { margin-bottom: 0; }
+    .rc-msg ul, .rc-msg ol { margin: 0 0 7px; padding-left: 18px; }
+    .rc-msg ul:last-child, .rc-msg ol:last-child { margin-bottom: 0; }
+    .rc-msg li { margin-bottom: 4px; }
+    .rc-msg li:last-child { margin-bottom: 0; }
+    .rc-msg .md-heading { margin: 9px 0 4px; font-weight: 700; }
+    .rc-msg strong { color: var(--rc-blue); font-weight: 700; }
+    .rc-msg.user strong { color: white; }
+    .rc-msg a { color: var(--rc-red); }
+    .rc-msg.user a { color: white; }
+    .rc-msg .law-center-banner { display: block; margin-top: 8px; }
+    .rc-msg .law-center-banner img {
+      display: block;
+      width: 160px;
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+    }
+
+    .rc-sources {
+      align-self: flex-start;
+      width: 100%;
+      padding: 0 2px;
+      color: var(--rc-blue);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .rc-sources-label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--rc-blue);
+      font-weight: 700;
+      letter-spacing: .03em;
+    }
+
+    .rc-source {
+      display: block;
+      margin: 3px 0;
+      padding: 6px 2px;
+      color: var(--rc-red);
+      text-decoration: underline;
+      overflow-wrap: anywhere;
+    }
+
+    .rc-source:hover { text-decoration: underline; }
+
+    .rc-typing {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 14px 16px;
+      border: 1px solid #e3eaf2;
+      border-radius: 13px;
+      border-bottom-left-radius: 4px;
+      background: white;
+      box-shadow: 0 2px 6px rgba(1, 34, 94, .06);
+    }
+
+    .rc-typing span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--rc-steel);
+      animation: rc-bounce 1.2s infinite;
+    }
+
+    .rc-typing span:nth-child(2) { animation-delay: .2s; }
+    .rc-typing span:nth-child(3) { animation-delay: .4s; }
+
+    .rc-suggestion {
+      align-self: flex-start;
+      border: 1px solid rgba(182, 29, 48, .45);
+      border-radius: 20px;
+      min-height: 44px;
+      padding: 8px 11px;
+      color: var(--rc-red);
+      cursor: pointer;
+      background: transparent;
+      font: 500 14px "Roboto", sans-serif;
+      text-align: left;
+    }
+
+    .rc-suggestion:hover { background: var(--rc-red); color: white; }
+    .rc-suggestion:disabled { cursor: wait; opacity: .55; }
+    .rc-suggestions { display: flex; flex-direction: column; gap: 8px; }
+
+    .rc-answer-actions { padding: 5px 12px; background: white; flex-shrink: 0; }
+    .rc-read-answer { min-height: 44px; padding: 8px 12px; border: 1px solid var(--rc-blue);
+      border-radius: 7px; color: var(--rc-blue); background: white; font: 500 14px "Roboto", sans-serif; cursor: pointer; }
+    .rc-read-answer[hidden] { display: none; }
+    .rc-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .rc-msg.bot:focus { outline: 3px solid var(--rc-red); outline-offset: 2px; }
+
+    .rc-disclaimer {
+      padding: 7px 14px 8px;
+      border-top: 1px solid #e5eaf0;
+      color: #46576d;
+      background: white;
+      font-size: 14px;
+      line-height: 1.45;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .rc-composer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 11px 12px;
+      border-top: 1px solid #e0e7ef;
+      background: white;
+      flex-shrink: 0;
+    }
+
+    .rc-composer textarea {
+      min-width: 0;
+      flex: 1;
+      min-height: 44px;
+      max-height: 100px;
+      resize: none;
+      padding: 10px 13px;
+      border: 1px solid #cad5e2;
+      border-radius: 19px;
+      outline: none;
+      color: var(--rc-ink);
+      font: 16px "Roboto", sans-serif;
+      line-height: 1.4;
+    }
+
+    .rc-composer textarea:focus {
+      border-color: var(--rc-steel);
+      box-shadow: 0 0 0 3px rgba(132, 156, 193, .18);
+    }
+
+    .rc-send {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      background: var(--rc-red);
+      transition: background .2s, transform .1s;
+    }
+
+    .rc-send:hover { background: var(--rc-red); }
+    .rc-send:active { transform: scale(.95); }
+    .rc-send:disabled { cursor: wait; opacity: .55; }
+    .rc-send svg { width: 16px; height: 16px; fill: currentColor; }
+
+    .rc-launcher {
+      position: absolute;
+      z-index: 3;
+      right: 24px;
+      bottom: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--rc-red);
+      box-shadow: 0 8px 20px rgba(1, 34, 94, .25);
+      transition: transform .2s ease;
+    }
+
+    .rc-launcher:hover { transform: scale(1.06); }
+    .rc-launcher svg { width: 25px; height: 25px; fill: currentColor; }
+    .rc-launcher[hidden] { display: none; }
+
+    .rc-footer {
+      position: absolute;
+      right: 0;
+      bottom: 12px;
+      left: 0;
+      color: var(--rc-blue);
+      font-size: 14px;
+      text-align: center;
+    }
+
+    @keyframes rc-rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes rc-fade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes rc-bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-5px); }
+    }
+
+    .rc-widget a:focus-visible, .rc-widget button:focus-visible, .rc-widget textarea:focus-visible {
+      outline: 3px solid var(--rc-red);
+      outline-offset: 2px;
+    }
+    @media (max-width: 620px), (max-height: 600px) {
+      .rc-surface { padding: 0; }
+      .rc-context { display: none; }
+      .rc-widget {
+        position: relative;
+        inset: auto;
+        width: 100%;
+        height: var(--rc-visible-height, 100dvh);
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        overflow-y: auto;
+      }
+      .rc-messages { flex: 1 0 120px; }
+      .rc-footer { display: none; }
+    }
+    @media (max-width: 319px) {
+      .rc-header { padding: 6px; }
+      .rc-header img { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="rc-surface">
+    <div class="rc-context">
+      <div class="rc-context-kicker">Reserve Organization of America</div>
+      <h1>A clear next step for service members navigating change.</h1>
+      <p>Search the full ReserveConnect knowledge base, with a focus on source-supported VA disability claims and benefits guidance.</p>
+      <div class="rc-rule" aria-hidden="true"></div>
+    </div>
+
+    <section class="rc-widget" id="chat-widget" aria-label="ReserveConnect Navigator chat">
+      <header class="rc-header">
+        <img src="/reserveconnect-ai-explorer-logo.png" alt="" style="width:32px;height:32px;object-fit:contain;margin-right:8px">
+        <div class="rc-header-title">ReserveConnect Navigator</div>
+        <button class="rc-clear" id="clear-chat" type="button">Clear conversation</button>
+        <button class="rc-close" id="close-chat" type="button" aria-label="Close chat">×</button>
+      </header>
+      <div class="rc-crisis-pin" id="crisis-pin">
+        <a href="#crisis-resources-card" id="crisis-pin-link">Crisis resources</a>
+      </div>
+      <details class="rc-privacy-note"><summary>Privacy: Do not enter personal or sensitive information. Read more</summary><p>Development chat only. Closing chat clears this conversation from this page. ROA's chat application does not save chat transcripts in a database or file; hosting logs still need to be verified. Questions are processed by AI service providers to generate answers: Voyage AI receives search questions, Pinecone receives question-derived vectors, and Anthropic receives questions and chat history. This chat does not use live web search. Do not enter personal or sensitive information, including names, emails, SSNs, account numbers, or medical records. Linked sign-ups happen outside this chat. <a href="https://www.roa.org/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy policy</a></p></details>
+      <div class="rc-messages" id="chat"></div>
+      <div class="rc-answer-actions">
+        <button class="rc-read-answer" id="read-answer" type="button" hidden>Read latest answer</button>
+        <div class="rc-status" id="answer-status" role="status" aria-live="polite" aria-atomic="true"></div>
+      </div>
+      <div class="rc-disclaimer" id="disclaimer">AI responses may not be fully accurate. Verify important information with ROA.</div>
+      <div class="rc-composer" id="composer">
+        <span class="rc-ai-label">AI assistant — not a human.</span>
+        <textarea id="input" rows="1" placeholder="Ask about benefits, programs..." aria-label="Message"></textarea>
+        <button class="rc-send" id="send-btn" type="button" aria-label="Send message" title="Send message">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 21l21-9L2 3v7l15 2-15 2z"></path></svg>
+        </button>
+      </div>
+    </section>
+
+    <button class="rc-launcher" id="open-chat" type="button" aria-label="Open chat" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"></path></svg>
+    </button>
+    <div class="rc-footer">ReserveConnect Navigator · ROA member resources</div>
+  </main>
+
+  <script>
+    const BACKEND = "";
+    const PRIVACY_POLICY_URL = "https://www.roa.org/privacy-policy";
+    const chatWidget = document.getElementById("chat-widget");
+    const chat = document.getElementById("chat");
+    const composer = document.getElementById("composer");
+    const disclaimer = document.getElementById("disclaimer");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("send-btn");
+    const closeBtn = document.getElementById("close-chat");
+    const openBtn = document.getElementById("open-chat");
+    const readAnswerBtn = document.getElementById("read-answer");
+    const answerStatus = document.getElementById("answer-status");
+    let latestAnswer = null;
+    readAnswerBtn.addEventListener("click", () => {
+      latestAnswer?.focus();
+    });
+    function publishAnswer(message) {
+      if (!message) return;
+      latestAnswer = message;
+      message.tabIndex = -1;
+      message.setAttribute("role", "article");
+      message.setAttribute("aria-label", "Latest chatbot answer");
+      readAnswerBtn.hidden = false;
+      answerStatus.textContent = "Answer ready. Use Read latest answer to review it.";
+    }
+
+    function syncVisibleViewport() {
+      if (window.visualViewport) {
+        chatWidget.style.setProperty("--rc-visible-height", `${window.visualViewport.height}px`);
+      }
+    }
+    window.visualViewport?.addEventListener("resize", syncVisibleViewport);
+    syncVisibleViewport();
+
+    let history = [];
+    let dd214PathwayState = "not_started";
+    let conversationState = {};
+    let requestId = 0;
+    let activeRequest = null;
+    let loading = false;
+    let welcomeShown = false;
+    let crisisActive = false;
+    let crisisCardShown = false;
+    let crisisOthers = false;
+    const aiNoticeText = "You're chatting with an AI assistant from the Reserve Organization of America (ROA), not a human. It can make mistakes, and it isn't a substitute for advice from a lawyer, doctor, counselor, or other professional. Please don't enter personal information such as your Social Security number, DoD ID number, date of birth, home address, phone number, or other details that could identify you.";
+    const aiNoticeInterval = 3 * 60 * 60 * 1000;
+    let aiNoticeReminderShown = false;
+    let aiNoticeReminderDue = false;
+    const signupKey = "roa-chatbot-invitation-v2";
+    let signupProgress = { answers: 0, shown: false };
+    try { signupProgress = { ...signupProgress, ...JSON.parse(sessionStorage.getItem(signupKey) || "{}") }; } catch (_) {}
+    function saveSignupProgress() {
+      try { sessionStorage.setItem(signupKey, JSON.stringify(signupProgress)); } catch (_) {}
+    }
+
+    const generalSuggested = [
+      "I'm transitioning out of the Guard/Reserve. What should I do next?",
+      "I have a question about law (employment/reemployment, UCMJ, etc)",
+      "I'm in the Guard/Reserve and have VA disability questions.",
+      "My pay is a mess. Help!",
+      "I need help with special pay and compensation (BAH, BAS, travel pay, special duty pay);",
+      "I'm a Guard/Reserve veteran. What benefits do I qualify for?",
+      "I need help finding a civilian job or a career mentor",
+      "How can my family get support during a deployment or activation?",
+      "What do I get as an ROA member?",
+      "Is there a live webinar or forum where I can ask questions?"
+    ];
+    const lawCenterSuggested = [
+      "Help! I was fired/harassed/not promoted due to Guard/Reserve Service",
+      "I'm researching VA disability claims",
+      "I'm a pilot-how does USERRA protect me?",
+      "Returning to work: What are my protections",
+      "I'm in the Guard & Reserve-how does voting work when out of state or overseas?",
+      "What is USERRA?",
+      "I'm facing a UCMJ investigation or Article 15 - what are my rights?",
+      "How does a PCS or deployment affect custody and child support?",
+      "Can SCRA cap my interest rate or protect me from eviction while I'm on orders?",
+      "What is a Federal Post Card Application (FPCA) and how do I vote absentee?"
+    ];
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function renderMarkdown(raw) {
+      const inline = value => {
+        const links = [];
+        const link = (label, href) => {
+          const token = `__ROA_LINK_${links.length}__`;
+          links.push(`<a href="${href}" target="_blank" rel="noopener">${label}</a>`);
+          return token;
+        };
+        return escapeHtml(value)
+          .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+          .replace(/\*([^*\n]+?)\*/g, "<em>$1</em>")
+          .replace(/\[([^\]]+)\]\((https:\/\/[^)\s<>"']+|\/[^)\s<>"']*)\)/g,
+            (_, label, href) => link(label, href))
+          .replace(/(https?:\/\/[^\s<)"]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')
+          .replace(/__ROA_LINK_(\d+)__/g, (token, index) => links[Number(index)] || token);
+      };
+
+      const normalized = String(raw).replace(/\[LAW_CENTER_BANNER\]/g, "\n[LAW_CENTER_BANNER]\n");
+      const lines = normalized.split("\n");
+      const output = [];
+      let listType = null;
+      let listItems = [];
+
+      function flushList() {
+        if (listItems.length) {
+          output.push(`<${listType}>${listItems.join("")}</${listType}>`);
+          listItems = [];
+          listType = null;
+        }
+      }
+
+      for (const line of lines) {
+        const text = line.trim();
+        if (text === "[LAW_CENTER_BANNER]") {
+          flushList();
+          output.push(
+            '<a class="law-center-banner" href="https://roa.org/lawcenter/" target="_blank" rel="noopener">' +
+            '<img src="/lawcenter.webp" alt="ROA Reserve Service Law Center"></a>' +
+            '<p class="law-center-caption">For more information, visit the ' +
+            '<a href="https://roa.org/lawcenter/" target="_blank" rel="noopener">ROA Reserve Service Law Center</a>.</p>'
+          );
+        } else if (/^[-*•] /.test(text)) {
+          if (listType !== "ul") { flushList(); listType = "ul"; }
+          listItems.push(`<li>${inline(text.replace(/^[-*•] /, ""))}</li>`);
+        } else if (/^\d+\. /.test(text)) {
+          if (listType !== "ol") { flushList(); listType = "ol"; }
+          listItems.push(`<li>${inline(text.replace(/^\d+\. /, ""))}</li>`);
+        } else if (text === "") {
+          // Keep a list open across blank lines so ordered lists do not restart at 1.
+        } else if (/^#{1,3} /.test(text)) {
+          flushList();
+          output.push(`<p class="md-heading">${inline(text.replace(/^#{1,3} /, ""))}</p>`);
+        } else {
+          flushList();
+          output.push(`<p>${inline(text)}</p>`);
+        }
+      }
+      flushList();
+      return output.join("");
+    }
+
+    function sourceHref(source) {
+      try {
+        const url = new URL(String(source));
+        if (url.protocol === "https:" && !url.username && !url.password) return url.href;
+      } catch (_) {}
+      return null;
+    }
+
+    function appendSources(parent, sources) {
+      if (!sources || !sources.length) return;
+      const sourceWrap = document.createElement("div");
+      sourceWrap.className = "rc-sources";
+      const label = document.createElement("span");
+      label.className = "rc-sources-label";
+      label.textContent = "Sources";
+      sourceWrap.appendChild(label);
+
+      sources.forEach(source => {
+        const href = sourceHref(source);
+        if (!href) return;
+        const link = document.createElement("a");
+        link.className = "rc-source";
+        link.href = href;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = String(source).replace(/^https?:\/\//, "");
+        sourceWrap.appendChild(link);
+      });
+      parent.appendChild(sourceWrap);
+    }
+
+    function addMessage(text, role, sources = []) {
+      const message = document.createElement("div");
+      message.className = `rc-msg ${role}`;
+      if (role === "bot") message.innerHTML = renderMarkdown(text);
+      else message.textContent = text;
+      chat.appendChild(message);
+      if (role === "bot") appendSources(chat, sources);
+      chat.scrollTop = chat.scrollHeight;
+      return message;
+    }
+
+    function scrollToAnswerStart(answer) {
+      requestAnimationFrame(() => {
+        if (!answer?.isConnected) return;
+        chat.scrollTop += answer.getBoundingClientRect().top -
+          chat.getBoundingClientRect().top - 8;
+      });
+    }
+
+    function showTyping() {
+      const typing = document.createElement("div");
+      typing.className = "rc-typing";
+      typing.id = "typing";
+      typing.setAttribute("aria-label", "Searching the knowledge base");
+      typing.innerHTML = "<span></span><span></span><span></span>";
+      chat.appendChild(typing);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function removeTyping() {
+      document.getElementById("typing")?.remove();
+    }
+
+    function showChat() {
+      if (!welcomeShown) {
+        showAiNotice();
+        addMessage("Hello. I search the full ReserveConnect knowledge base, with a focus on VA disability claims and benefits. Disability answers require relevant source support. What can I help you research?", "bot");
+        welcomeShown = true;
+      }
+      if (!crisisActive) renderSuggestions();
+      chat.scrollTop = 0;
+      input.focus();
+    }
+
+    function showAiNotice() {
+      const notice = document.createElement("aside");
+      notice.className = "rc-ai-notice";
+      notice.setAttribute("role", "note");
+      notice.textContent = aiNoticeText;
+      chat.appendChild(notice);
+    }
+
+    function showAiNoticeReminder() {
+      if (aiNoticeReminderShown) return;
+      if (chatWidget.classList.contains("is-hidden")) {
+        aiNoticeReminderDue = true;
+        return;
+      }
+      aiNoticeReminderShown = true;
+      showAiNotice();
+      chat.scrollTop = chat.scrollHeight;
+      answerStatus.textContent = "Reminder: this is an AI assistant. Do not enter personal information.";
+    }
+
+    window.setTimeout(showAiNoticeReminder, aiNoticeInterval);
+
+    function showRedactionNote(text) {
+      const note = document.createElement("div");
+      note.className = "rc-redaction-note";
+      note.setAttribute("role", "status");
+      note.setAttribute("aria-live", "polite");
+      note.textContent = text || "It looks like your message included personal information, so we removed it before processing. You don't need to share personal details to get help.";
+      chat.appendChild(note);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function showCrisisCard(harmOthers = false) {
+      crisisActive = true;
+      crisisOthers = crisisOthers || Boolean(harmOthers);
+      conversationState = { ...conversationState, crisisActive: true };
+      const pin = document.getElementById("crisis-pin");
+      pin?.classList.add("is-visible");
+      pin?.setAttribute("aria-label", "Crisis resources available during this chat");
+      if (crisisCardShown) return;
+      crisisCardShown = true;
+
+      const card = document.createElement("section");
+      card.className = "rc-crisis-card";
+      card.id = "crisis-resources-card";
+      card.setAttribute("role", "alert");
+      card.setAttribute("aria-labelledby", "crisis-card-title");
+
+      const phoneLink = (text, href, label) => {
+        const link = document.createElement("a");
+        link.href = href;
+        link.textContent = text;
+        link.setAttribute("aria-label", label);
+        return link;
+      };
+      const webLink = (text, href) => {
+        const link = document.createElement("a");
+        link.href = href;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = text;
+        return link;
+      };
+      const paragraph = text => {
+        const element = document.createElement("p");
+        element.textContent = text;
+        card.appendChild(element);
+        return element;
+      };
+      const list = items => {
+        const ul = document.createElement("ul");
+        items.forEach(item => {
+          const li = document.createElement("li");
+          li.append(...item);
+          ul.appendChild(li);
+        });
+        card.appendChild(ul);
+      };
+      if (crisisOthers) {
+        const danger = paragraph("");
+        danger.append("If anyone is in immediate danger, call ", phoneLink("911", "tel:911", "Call 911"), ".");
+      }
+      const heading = document.createElement("h2");
+      heading.id = "crisis-card-title";
+      heading.textContent = "You're not alone, and help is available right now — free, confidential, 24/7.";
+      card.appendChild(heading);
+
+      const veteransHeading = document.createElement("h3");
+      veteransHeading.textContent = "VETERANS CRISIS LINE";
+      card.appendChild(veteransHeading);
+      paragraph("For service members (including National Guard and Reserve), veterans, and their families. You don't need to be enrolled in VA.");
+      list([
+        ["Call ", phoneLink("988", "tel:988", "Call 988"), ", then press 1"],
+        ["Text ", phoneLink("838255", "sms:838255", "Text 838255")],
+        ["Chat online: ", webLink("veteranscrisisline.net", "https://www.veteranscrisisline.net")],
+      ]);
+
+      const lifelineHeading = document.createElement("h3");
+      lifelineHeading.textContent = "988 SUICIDE & CRISIS LIFELINE";
+      card.appendChild(lifelineHeading);
+      list([
+        ["Call or text ", phoneLink("988", "tel:988", "Call or text 988")],
+        ["Chat online: ", webLink("988lifeline.org", "https://988lifeline.org")],
+      ]);
+      if (!crisisOthers) {
+        const danger = paragraph("");
+        danger.append("If you or someone else is in immediate danger, call ", phoneLink("911", "tel:911", "Call 911"), ".");
+      }
+      paragraph("I'm an AI assistant and can't provide crisis counseling, but the people at these lines are trained to help.");
+      chat.insertBefore(card, chat.firstChild);
+      chat.scrollTop = 0;
+    }
+
+    function offerSignup() {
+      if (crisisActive || signupProgress.shown || signupProgress.answers < 4 ||
+          document.getElementById("optional-signup")) return;
+      signupProgress.shown = true;
+      saveSignupProgress();
+      const card = document.createElement("section");
+      card.className = "rc-signup";
+      card.id = "optional-signup";
+      card.setAttribute("aria-label", "Optional ROA updates and membership");
+      card.innerHTML = `<h2>Stay connected with ROA?</h2>
+        <p>These are optional. You can choose any, all, or none and keep chatting.</p>
+        <p class="rc-invite-option">Want Reserve-specific news via ROA's SmartBrief?
+          <a href="https://newsletter.smartbrief.com/rest/sign-up/36B2225B-FD16-44ED-87FF-31158956003F" target="_blank" rel="noopener noreferrer">Sign up for SmartBrief</a>.</p>
+        <p class="rc-invite-option">Want to join ROA's email list?
+          <a href="https://roa.org/roaemail/" target="_blank" rel="noopener noreferrer">Join the email list</a>.</p>
+        <p class="rc-invite-option">Want to join ROA? If you're currently serving and under 35, membership is free; if you're over 35, it's $20/year.
+          <a href="https://roa.org" target="_blank" rel="noopener noreferrer">Join</a>.</p>
+        <button class="rc-later" type="button">No thanks — keep chatting</button>`;
+      chat.appendChild(card);
+      card.querySelector(".rc-later").addEventListener("click", () => {
+        card.remove();
+        input.focus();
+      });
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function renderSuggestions() {
+      document.getElementById("quick-prompts")?.remove();
+      const suggestionWrap = document.createElement("div");
+      suggestionWrap.id = "quick-prompts";
+      suggestionWrap.className = "rc-suggestions";
+      const prompts = generalSuggested;
+      prompts.forEach(prompt => {
+        const button = document.createElement("button");
+        button.className = "rc-suggestion";
+        button.type = "button";
+        button.textContent = prompt;
+        button.addEventListener("click", () => send(prompt));
+        suggestionWrap.appendChild(button);
+      });
+      chat.appendChild(suggestionWrap);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function send(text = input.value.trim()) {
+      const clean = text.trim();
+      if (!clean || loading) return;
+
+      const currentRequest = ++requestId;
+      const controller = new AbortController();
+      activeRequest = controller;
+      loading = true;
+      sendBtn.disabled = true;
+      input.disabled = true;
+      input.value = "";
+      input.style.height = "38px";
+      const userMessage = addMessage(clean, "user");
+      showTyping();
+      history.push({ role: "user", content: clean });
+
+      try {
+        const response = await fetch(`${BACKEND}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            message: clean,
+            conversationHistory: history.slice(-20),
+            dd214PathwayState,
+            conversationState: { ...conversationState, crisisActive }
+          })
+        });
+        if (currentRequest !== requestId) return;
+
+        if (response.status === 422) {
+          userMessage.remove();
+          history.pop();
+          removeTyping();
+          publishAnswer(addMessage("For your privacy, remove email addresses, phone numbers, SSNs, account numbers, and payment card numbers before sending. Please try again without personal details.", "bot"));
+          return;
+        }
+        if (!response.ok || !response.body) {
+          throw new Error("Chat request failed");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let fullText = "";
+        let botMessage = null;
+        let crisisHandled = false;
+
+        function handleEvent(line) {
+          if (currentRequest !== requestId) return;
+          if (!line.startsWith("data: ")) return;
+          let event;
+          try { event = JSON.parse(line.slice(6)); } catch (_) { return; }
+
+          if (event.type === "redaction") {
+            userMessage.textContent = event.text || clean;
+            const lastUser = [...history].reverse().find(entry => entry.role === "user");
+            if (lastUser) lastUser.content = event.text || clean;
+            showRedactionNote(event.notice);
+          } else if (event.type === "crisis") {
+            removeTyping();
+            history = history.filter((entry, index) =>
+              !(index === history.length - 1 && entry.role === "user"));
+            showCrisisCard(event.harmOthers);
+            crisisHandled = true;
+          } else if (event.type === "text") {
+            if (!botMessage) {
+              removeTyping();
+              botMessage = addMessage("", "bot");
+            }
+            fullText += event.text;
+            botMessage.innerHTML = renderMarkdown(fullText);
+            chat.scrollTop = chat.scrollHeight;
+          } else if (event.type === "done") {
+            if (event.crisis) {
+              crisisActive = true;
+              if (event.conversationState) {
+                conversationState = { ...event.conversationState, crisisActive: true };
+              }
+              if (!crisisHandled) {
+                removeTyping();
+                history = history.filter((entry, index) =>
+                  !(index === history.length - 1 && entry.role === "user"));
+                showCrisisCard(false);
+                crisisHandled = true;
+              }
+              return;
+            }
+            if (botMessage && event.finalText) {
+              fullText = event.finalText;
+              botMessage.innerHTML = renderMarkdown(fullText);
+            }
+            history.push({ role: "assistant", content: fullText });
+            if (event.conversationState) {
+              conversationState = {
+                ...event.conversationState,
+                crisisActive: crisisActive || event.conversationState.crisisActive === true,
+              };
+              crisisActive = conversationState.crisisActive;
+            }
+            if (event.dd214PathwayState) {
+              dd214PathwayState = event.dd214PathwayState;
+            }
+            if (botMessage) appendSources(botMessage.parentElement, event.sources || []);
+            publishAnswer(botMessage);
+            signupProgress.answers += 1;
+            saveSignupProgress();
+            if (!crisisActive) offerSignup();
+            scrollToAnswerStart(botMessage);
+          } else if (event.type === "error") {
+            throw new Error(event.message || "Chat request failed");
+          }
+        }
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (currentRequest !== requestId) {
+            await reader.cancel();
+            return;
+          }
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop();
+          lines.forEach(handleEvent);
+        }
+        if (buffer.trim()) handleEvent(buffer);
+        if (!botMessage && !crisisHandled) throw new Error("No response received");
+      } catch (error) {
+        if (currentRequest !== requestId) return;
+        removeTyping();
+        publishAnswer(addMessage("Sorry, something went wrong. Please try again.", "bot"));
+        console.error("ReserveConnect chat request failed");
+      } finally {
+        if (currentRequest !== requestId) return;
+        activeRequest = null;
+        loading = false;
+        sendBtn.disabled = false;
+        input.disabled = false;
+        input.focus();
+      }
+    }
+
+    function resetConversation() {
+      requestId += 1;
+      activeRequest?.abort();
+      activeRequest = null;
+      loading = false;
+      sendBtn.disabled = false;
+      input.disabled = false;
+      history = [];
+      conversationState = crisisActive ? { crisisActive: true } : {};
+      dd214PathwayState = "not_started";
+      chat.replaceChildren();
+      crisisCardShown = false;
+      document.getElementById("crisis-pin")?.classList.toggle("is-visible", crisisActive);
+      latestAnswer = null;
+      readAnswerBtn.hidden = true;
+      answerStatus.textContent = "";
+      welcomeShown = false;
+      input.value = "";
+      input.style.height = "38px";
+      if (crisisActive) showCrisisCard(crisisOthers);
+    }
+
+    showChat();
+    document.getElementById("clear-chat").addEventListener("click", () => {
+      resetConversation();
+      showChat();
+    });
+    sendBtn.addEventListener("click", () => send());
+    input.addEventListener("keydown", event => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        send();
+      }
+    });
+    input.addEventListener("input", () => {
+      input.style.height = "38px";
+      input.style.height = `${Math.min(input.scrollHeight, 100)}px`;
+    });
+    closeBtn.addEventListener("click", () => {
+      resetConversation();
+      chatWidget.classList.add("is-hidden");
+      openBtn.hidden = false;
+      openBtn.focus();
+    });
+    openBtn.addEventListener("click", () => {
+      chatWidget.classList.remove("is-hidden");
+      openBtn.hidden = true;
+      showChat();
+      if (aiNoticeReminderDue && !aiNoticeReminderShown) {
+        aiNoticeReminderDue = false;
+        aiNoticeReminderShown = true;
+        chat.scrollTop = chat.scrollHeight;
+        answerStatus.textContent = "Reminder: this is an AI assistant. Do not enter personal information.";
+      }
+    });
+  </script>
+</body>
+</html>
