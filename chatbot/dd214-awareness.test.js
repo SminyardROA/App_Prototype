@@ -33,7 +33,10 @@ test("final guard removes repeated awareness but keeps DD214-1 explanations", ()
 
 test("Veteran instruction prefers Law Review 26074 without inventing citations", () => {
   assert.match(config.systemPrompt, /Law Review 26074 is the best reference for defining "Veteran"/);
-  assert.match(config.systemPrompt, /Do not invent the article's contents, URL, or a citation if it was not retrieved/);
+  assert.match(config.systemPrompt, /Do not invent the article's contents, URL, or a citation/);
+  assert.match(config.systemPrompt, /NOT an exclusive source or a prerequisite/);
+  assert.match(config.systemPrompt, /Do not describe retrieval results/);
+  assert.doesNotMatch(config.systemPrompt, /say the preferred reference could not be verified/);
 });
 
 test("multi-turn chat asks awareness once across modes, topic changes, and resumed transition", async () => {

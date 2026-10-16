@@ -1,0 +1,249 @@
+{
+  "sourceUrl": "https://www.va.gov/disability/compensation-rates/veteran-rates/",
+  "title": "VA Veterans disability compensation rates",
+  "rateYear": 2026,
+  "effectiveDate": "2025-12-01",
+  "currentUseThrough": "2026-11-30",
+  "retrievedAt": "2026-10-16T15:46:06.793Z",
+  "sourceUpdated": "December 2, 2025",
+  "sourceSha256": "ac54c77d4f0ab4bf52d74191ac2d5e9c5a17a06c5cb9f5b778954fcdfaba48ef",
+  "smallRatings": {
+    "10": 18042,
+    "20": 35666
+  },
+  "basic": {
+    "0-0-0": {
+      "label": "Veteran alone (no dependents)",
+      "spouse": false,
+      "parents": 0,
+      "includesOneChild": false,
+      "amounts": {
+        "30": 55247,
+        "40": 79584,
+        "50": 113290,
+        "60": 143502,
+        "70": 180845,
+        "80": 210215,
+        "90": 236230,
+        "100": 393858
+      }
+    },
+    "1-0-0": {
+      "label": "With spouse (no parents or children)",
+      "spouse": true,
+      "parents": 0,
+      "includesOneChild": false,
+      "amounts": {
+        "30": 61747,
+        "40": 88284,
+        "50": 124190,
+        "60": 156602,
+        "70": 196145,
+        "80": 227715,
+        "90": 255930,
+        "100": 415817
+      }
+    },
+    "1-1-0": {
+      "label": "With spouse and 1 parent (no children)",
+      "spouse": true,
+      "parents": 1,
+      "includesOneChild": false,
+      "amounts": {
+        "30": 66947,
+        "40": 95284,
+        "50": 132990,
+        "60": 167102,
+        "70": 208445,
+        "80": 241715,
+        "90": 271730,
+        "100": 433441
+      }
+    },
+    "1-2-0": {
+      "label": "With spouse and 2 parents (no children)",
+      "spouse": true,
+      "parents": 2,
+      "includesOneChild": false,
+      "amounts": {
+        "30": 72147,
+        "40": 102284,
+        "50": 141790,
+        "60": 177602,
+        "70": 220745,
+        "80": 255715,
+        "90": 287530,
+        "100": 451065
+      }
+    },
+    "0-1-0": {
+      "label": "With 1 parent (no spouse or children)",
+      "spouse": false,
+      "parents": 1,
+      "includesOneChild": false,
+      "amounts": {
+        "30": 60447,
+        "40": 86584,
+        "50": 122090,
+        "60": 154002,
+        "70": 193145,
+        "80": 224215,
+        "90": 252030,
+        "100": 411482
+      }
+    },
+    "0-2-0": {
+      "label": "With 2 parents (no spouse or children)",
+      "spouse": false,
+      "parents": 2,
+      "includesOneChild": false,
+      "amounts": {
+        "30": 65647,
+        "40": 93584,
+        "50": 130890,
+        "60": 164502,
+        "70": 205445,
+        "80": 238215,
+        "90": 267830,
+        "100": 429106
+      }
+    },
+    "0-0-1": {
+      "label": "Veteran with 1 child only (no spouse or parents)",
+      "spouse": false,
+      "parents": 0,
+      "includesOneChild": true,
+      "amounts": {
+        "30": 59647,
+        "40": 85384,
+        "50": 120590,
+        "60": 152302,
+        "70": 191045,
+        "80": 221915,
+        "90": 249430,
+        "100": 408543
+      }
+    },
+    "1-0-1": {
+      "label": "With 1 child and spouse (no parents)",
+      "spouse": true,
+      "parents": 0,
+      "includesOneChild": true,
+      "amounts": {
+        "30": 66647,
+        "40": 94784,
+        "50": 132290,
+        "60": 166302,
+        "70": 207445,
+        "80": 240615,
+        "90": 270430,
+        "100": 431899
+      }
+    },
+    "1-1-1": {
+      "label": "With 1 child, spouse, and 1 parent",
+      "spouse": true,
+      "parents": 1,
+      "includesOneChild": true,
+      "amounts": {
+        "30": 71847,
+        "40": 101784,
+        "50": 141090,
+        "60": 176802,
+        "70": 219745,
+        "80": 254615,
+        "90": 286230,
+        "100": 449523
+      }
+    },
+    "1-2-1": {
+      "label": "With 1 child, spouse, and 2 parents",
+      "spouse": true,
+      "parents": 2,
+      "includesOneChild": true,
+      "amounts": {
+        "30": 77047,
+        "40": 108784,
+        "50": 149890,
+        "60": 187302,
+        "70": 232045,
+        "80": 268615,
+        "90": 302030,
+        "100": 467147
+      }
+    },
+    "0-1-1": {
+      "label": "With 1 child and 1 parent (no spouse)",
+      "spouse": false,
+      "parents": 1,
+      "includesOneChild": true,
+      "amounts": {
+        "30": 64847,
+        "40": 92384,
+        "50": 129390,
+        "60": 162802,
+        "70": 203345,
+        "80": 235915,
+        "90": 265230,
+        "100": 426167
+      }
+    },
+    "0-2-1": {
+      "label": "With 1 child and 2 parents (no spouse)",
+      "spouse": false,
+      "parents": 2,
+      "includesOneChild": true,
+      "amounts": {
+        "30": 70047,
+        "40": 99384,
+        "50": 138190,
+        "60": 173302,
+        "70": 215645,
+        "80": 249915,
+        "90": 281030,
+        "100": 443791
+      }
+    }
+  },
+  "additions": {
+    "spouseAidAttendance": {
+      "label": "Spouse receiving Aid and Attendance",
+      "amounts": {
+        "30": 6100,
+        "40": 8100,
+        "50": 10100,
+        "60": 12100,
+        "70": 14100,
+        "80": 16100,
+        "90": 18100,
+        "100": 20141
+      }
+    },
+    "childUnder18": {
+      "label": "Each additional child under age 18",
+      "amounts": {
+        "30": 3200,
+        "40": 4300,
+        "50": 5400,
+        "60": 6500,
+        "70": 7600,
+        "80": 8700,
+        "90": 9800,
+        "100": 10911
+      }
+    },
+    "schoolChildOver18": {
+      "label": "Each additional child over age 18 in a qualifying school program",
+      "amounts": {
+        "30": 10500,
+        "40": 14000,
+        "50": 17600,
+        "60": 21100,
+        "70": 24600,
+        "80": 28100,
+        "90": 31700,
+        "100": 35245
+      }
+    }
+  }
+}

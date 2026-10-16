@@ -17,11 +17,12 @@
     privacyPolicyUrl: "https://www.roa.org/privacy-policy",
     quickQuestions: [
       "I'm transitioning out of the Guard/Reserve. What should I do next?",
-      "I have a question about law (employment/reemployment, UCMJ, etc)",
-      "I'm in the Guard/Reserve and have VA disability questions.",
-      "My pay is a mess. Help!",
-      "I need help with special pay and compensation (BAH, BAS, travel pay, special duty pay);",
-      "I'm a Guard/Reserve veteran. What benefits do I qualify for?",
+      "I have questions about VA disability ratings.",
+      "I have questions about presumptive conditions.",
+      "How do I start a disability claim?",
+      "Help! I don't know where to start to get VA help.",
+      "I am in crisis and need help.",
+      "How can I tell whether I'm a veteran?",
     ],
     lawCenterQuickQuestions: [
       "Help! I was fired/harassed/not promoted due to Guard/Reserve Service",

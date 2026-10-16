@@ -17,6 +17,10 @@ import { PINNED_SECTIONS, dd214PathwayChunkIds, dodFmrBahRequiredChunkIds, verif
 import { buildRetrievalQuery } from "./retrieval-query.js";
 import { queryKnowledgeIndex } from "./knowledge-search.js";
 import { vaCfrPlans, recoverCfrMatches } from "./va-cfr-retrieval.js";
+import {
+  isTrainingServiceResearch, TRAINING_STATUTE_FILTER, selectTrainingAuthority,
+  trainingAuthorityInstruction, normalizeTrainingCitationLists,
+} from "./training-authority.js";
 import { isSusanLukasResearchQuestion, SUSAN_LUKAS_DOCUMENT } from "./legislation-topics.js";
 import { isGeneralVaOpening, VA_OPENING_REPLY } from "./va-opening.js";
 import { verifiedUploadedSource, sourceQualityRank, sourceContext, canonicalSourceIdentity, sourceException } from "./source-provenance.js";
@@ -24,6 +28,7 @@ import { sourcePackAuthentication, sourcePackHandler } from "./source-pack.js";
 import { DD214_AWARENESS_QUESTION, resolveDd214State, removeRepeatedDd214Awareness, volunteeredDd214Awareness } from "./dd214-awareness.js";
 import { currentBasAnswer, currentIdtTravelCapAnswer, hasCurrentYearRateEvidence, isCurrentBasRateQuestion, isCurrentIdtTravelCapQuestion, isCurrentPayRateQuestion } from "./current-pay-rates.js";
 import { drillPayTurn } from "./drill-pay-rates.js";
+import { vaCompensationTurn } from "./va-compensation.js";
 import { cachedSystemBlocks } from "./prompt-cache.js";
 import { bahRateTurn, sanitizeBahLookupState } from "./bah-rates.js";
 import { officialAllowanceAnswer } from "./official-allowances.js";
@@ -42,8 +47,9 @@ import {
 } from "./injury-retrieval.js";
 import {
   VETERAN_DEFINITION_URL, isVeteranDefinitionQuestion, isVeteranDefinitionMatch,
-  contextualVeteranQuestion, veteranBenefitClarification,
+  contextualVeteranQuestion, veteranBenefitClarification, veteranGuidanceInstruction,
 } from "./veteran-definition.js";
+import { formatServiceCharacterizationQuestions } from "./veteran-intake.js";
 import {
   TRANSITION_CLOSING,
   TRANSITION_QUESTIONS,
@@ -782,7 +788,14 @@ async function getKnowledgeBaseContext(
     const route = routeForMode(chatMode, question);
     const cfrPlans = lawCenterOnly ? [] : vaCfrPlans(`${question}\n${evidenceQuestion}`);
     const vaDisabilityQuestion = isVaDisabilityQuestion(question) || cfrPlans.length > 0;
-    const veteranDefinitionQuery = isVeteranDefinitionQuestion(question);
+    const trainingAuthorityQuery = !lawCenterOnly &&
+      isTrainingServiceResearch(`${question}\n${evidenceQuestion}`);
+    const veteranDefinitionQuery = isVeteranDefinitionQuestion(question) || trainingAuthorityQuery;
+    // Service-definition research also needs the implementing regulation, but
+    // must not turn a neutral Veteran-status intake into a disability question.
+    if (trainingAuthorityQuery && !cfrPlans.some(plan => plan.section === "3.6")) {
+      cfrPlans.push({ key: "3.6", section: "3.6", preferred: /disabled or died.{0,500}injury/i });
+    }
     const payPolicyQuery = !vaDisabilityQuestion && !lawCenterOnly && (chatMode === "pay" || isPayPolicyQuery(question));
     const dd214PathwayQuery =
       !lawCenterOnly &&
@@ -810,7 +823,9 @@ async function getKnowledgeBaseContext(
         ? SEARCH_EXPANSIONS[route.key]?.split(/\s+/).slice(0, 6).join(" ") : "",
       payPolicyQuery && route.key !== "pay" ? SEARCH_EXPANSIONS.pay?.split(/\s+/).slice(0, 5).join(" ") : "",
     ].filter(Boolean).join(" ").split(/\s+/).slice(0, 24).join(" ");
-    const expandedQuery = vaDisabilityQuestion
+    const expandedQuery = veteranDefinitionQuery
+      ? `${message}\nVeteran status and benefit eligibility: 38 USC 101 definition active military naval air space service discharge; 38 CFR 3.1(d) and 3.6 active duty ADT IDT qualifying service. Use applicable benefit rules, not DD214 issuance alone.`
+      : vaDisabilityQuestion
       ? `${question}\nVA disability source evidence`
       : retrievalFocus ? `${message}\nRetrieval focus: ${retrievalFocus}` : message;
     const queryVector = await retrievalClient.embed(expandedQuery);
@@ -838,6 +853,27 @@ async function getKnowledgeBaseContext(
         topK: route.legal ? 18 : payPolicyQuery || route.key === "va" ? 24 : 12,
       });
     }
+    let trainingAuthorityMatches = [];
+    let trainingAuthorityRecoveryFailed = false;
+    if (trainingAuthorityQuery) {
+      try {
+        const results = await queryKnowledgeIndex(retrievalClient, {
+          vector: queryVector, topK: 64, filter: TRAINING_STATUTE_FILTER,
+          signal: AbortSignal.timeout(10000),
+        });
+        trainingAuthorityMatches = selectTrainingAuthority([
+          ...(results.matches || []), ...(generalResults.matches || []),
+        ]);
+      } catch {
+        trainingAuthorityRecoveryFailed = true;
+        trainingAuthorityMatches = selectTrainingAuthority(generalResults.matches || []);
+        console.warn("Training authority lookup unavailable; continuing other member-source research.");
+      }
+    }
+    const trainingAuthorityKeys = new Set(trainingAuthorityMatches.map(match => {
+      const doc = sourceDocument(match);
+      return `${doc.url}\n${doc.text}`;
+    }));
     let vaFocusedMatches = [];
     let cfrRecoveryFailures = 0;
     const exactCfrResults = await Promise.all([...new Set(cfrPlans.map(plan => plan.section))]
@@ -908,11 +944,18 @@ async function getKnowledgeBaseContext(
     }
     let veteranDefinitionMatches = [];
     if (veteranDefinitionQuery) {
-      const results = await queryKnowledgeIndex(retrievalClient, {
-        vector: queryVector, topK: 8,
-        filter: { url: { $eq: VETERAN_DEFINITION_URL } },
-      });
-      veteranDefinitionMatches = (results.matches || []).filter(isVeteranDefinitionMatch);
+      try {
+        const results = await queryKnowledgeIndex(retrievalClient, {
+          vector: queryVector, topK: 8,
+          filter: { url: { $eq: VETERAN_DEFINITION_URL } },
+          signal: AbortSignal.timeout(10000),
+        });
+        veteranDefinitionMatches = (results.matches || []).filter(isVeteranDefinitionMatch);
+      } catch {
+        // An optional preferred reference must not discard full-corpus results.
+        // Do not expose provider errors or search mechanics in member answers.
+        console.warn("Preferred Veteran reference lookup unavailable; continuing other research.");
+      }
     }
 
     let lawResp = null;
@@ -1103,14 +1146,15 @@ async function getKnowledgeBaseContext(
     // distinct-source pass ensures mixed legal questions can reach both the
     // Law Center and official/general results.
     const proposalPriority = proposalMatches.slice(0, 2);
-    const matches = selectDiverseMatches([...proposalPriority, ...recoveredCfrMatches, ...rankedMatches], route.legal ? 12 : 10, match => {
+    const matches = selectDiverseMatches([...trainingAuthorityMatches, ...proposalPriority, ...recoveredCfrMatches, ...rankedMatches], route.legal ? 12 : 10, match => {
       // Preserve two passages of this single document, not two independent
       // authorities. Public source URLs and source counts remain canonical.
       if (proposalPriority.some(candidate => candidate.id === match.id)) return `proposal-passage:${match.id}`;
+      if (trainingAuthorityMatches.some(candidate => candidate.id === match.id)) return `training-definition:${match.id}`;
       if (isDodFmrVolume7aMatch(match)) return normalizeSourceUrl(dodFmrVolume7aUrl);
       if (isDodi133601Match(match)) return normalizeSourceUrl(dodi133601Url);
       return sourceDocumentKey(match);
-    }, [...proposalPriority, ...veteranDefinitionMatches.slice(0, 3), ...recoveredCfrMatches, ...focusedMatches,
+    }, [...trainingAuthorityMatches, ...proposalPriority, ...veteranDefinitionMatches.slice(0, 3), ...recoveredCfrMatches, ...focusedMatches,
       ...(route.legal && !lawCenterOnly ? generalCandidates.slice(0, 1) : [])]);
 
     const relevantMatches = matches;
@@ -1136,6 +1180,7 @@ async function getKnowledgeBaseContext(
 
     // Build final context: vector results first, then any pinned additions
     const candidateChunks = [
+      ...trainingAuthorityMatches.map(sourceDocument),
       ...veteranDefinitionMatches.map(sourceDocument),
       ...relevantMatches.map(sourceDocument),
       ...pinnedChunks.map(c => ({
@@ -1154,6 +1199,8 @@ async function getKnowledgeBaseContext(
           preferShoulderSchedule(question, relevantVaDisabilityDocuments(evidenceQuestion, candidateChunks)))
       : candidateChunks;
     const allChunks = [...candidateChunks.filter(chunk =>
+      trainingAuthorityKeys.has(`${chunk.url}\n${chunk.text}`)),
+      ...candidateChunks.filter(chunk =>
       recoveredCfrKeys.has(`${chunk.url}\n${chunk.text}`)), ...ordinaryChunks]
       .filter((chunk, i, chunks) => chunks.findIndex(other =>
         other.url === chunk.url && other.text === chunk.text) === i);
@@ -1215,6 +1262,10 @@ async function getKnowledgeBaseContext(
         proposalSelectedChunks: allChunks.filter(doc => doc.legalStatus === "proposal-discussion").length,
         proposalRecoveryFailed,
         cfrRecoveryFailures,
+        trainingAuthorityQuery,
+        trainingAuthorityRecoveryFailed,
+        trainingAuthoritySelectedChunks: allChunks.filter(doc =>
+          trainingAuthorityKeys.has(`${doc.url}\n${doc.text}`)).length,
         ...(isShoulderRatingQuestion(question) ? {
           shoulderScheduleEvidence: allChunks.some(isOfficialShoulderSchedule),
         } : {}),
@@ -1369,9 +1420,25 @@ app.post("/chat", limitRequests(30, 15 * 60 * 1000), async (req, res) => {
       return res.end();
     }
     const veteranQuestion = contextualVeteranQuestion(message, cleanHistory);
+    const veteranResearch = isVeteranDefinitionQuestion(veteranQuestion);
     const vaScope = resolveVaDisabilityQuestion(veteranQuestion, cleanHistory);
     const vaQuestion = vaScope.question;
     const requiresVaEvidence = vaScope.requiresEvidence;
+
+    // Verified VA payment rows are selected deterministically, not guessed
+    // from a projected COLA or interpreted from a flattened retrieved table.
+    if (!crisisSessionActive && !isLawCenterOnly) {
+      const compensation = vaCompensationTurn(message, cleanHistory);
+      if (compensation) {
+        res.write(`data: ${JSON.stringify({ type: "text", text: compensation.text })}\n\n`);
+        res.write(`data: ${JSON.stringify({
+          type: "done", sources: compensation.sources, finalText: compensation.text,
+          conversationState: conversation, dd214PathwayState,
+          retrieval: { category: "va", status: "verified-rate-table", selectedChunks: 0 },
+        })}\n\n`);
+        return res.end();
+      }
+    }
 
     if (!crisisSessionActive) {
       if (!denyingDeparture) conversation.intake =
@@ -1388,7 +1455,7 @@ app.post("/chat", limitRequests(30, 15 * 60 * 1000), async (req, res) => {
     const lastAssistant = [...cleanHistory].reverse().find(m => m.role === "assistant");
     const latestAssistant = cleanHistory.at(-1)?.role === "assistant" ? cleanHistory.at(-1) : null;
     const payMode = conversation && !crisisSessionActive &&
-      !requiresVaEvidence && !isLawCenterOnly && (chatMode === "pay" || chatMode === "general");
+      !veteranResearch && !requiresVaEvidence && !isLawCenterOnly && (chatMode === "pay" || chatMode === "general");
     // A newer assistant reply supersedes any pending choice, even if it has
     // no options. An older list in history must not answer a different question.
     const activeChoice = payMode && latestAssistant && letteredPayQuestion(latestAssistant.content)
@@ -1503,7 +1570,7 @@ app.post("/chat", limitRequests(30, 15 * 60 * 1000), async (req, res) => {
         (chatMode === "pay" || isPayPolicyQuery(message) ||
           Boolean(conversation?.payTraining || conversation?.lastPayQuestion)) });
     const dd214PathwayTriggered =
-      !crisisSessionActive && !isLawCenterOnly && !offPathway && conversation?.transitionEligible &&
+      !veteranResearch && !crisisSessionActive && !isLawCenterOnly && !offPathway && conversation?.transitionEligible &&
       dd214PathwayState !== "completed" &&
       (dd214PathwayState !== "not_started" || userLeaving);
     const dd214PolicyQuery =
@@ -1535,7 +1602,7 @@ app.post("/chat", limitRequests(30, 15 * 60 * 1000), async (req, res) => {
     const startIntake = intake?.stage === "not_started" &&
       !isLawCenterOnly && !offPathway && conversation?.transitionEligible &&
       nextDd214PathwayState === "completed" && !dd214ReviewAccepted;
-    const processIntake = !crisisSessionActive && intake && !offPathway && (startIntake || intakeActive);
+    const processIntake = !veteranResearch && !crisisSessionActive && intake && !offPathway && (startIntake || intakeActive);
     const nextIntake = processIntake ? advanceTransitionIntake(intake, message) : intake;
     if (processIntake && nextIntake.stage !== "completed") {
       // No model call can skip, repeat, or re-interpret an intake choice.
@@ -1802,7 +1869,9 @@ app.post("/chat", limitRequests(30, 15 * 60 * 1000), async (req, res) => {
       ? "\n\nORDINARY ANSWER LENGTH: Answer the question first. Keep your own response to about 110–140 words, including Markdown citations; leave room for any required program referrals, legal closing, and source attribution in the final answer (230 words maximum). For a broad question, give only the most relevant 2–3 points and one focused follow-up question instead of a catalog of options. For multiple topics, use one short sentence per topic. Do not omit a verified source for a factual claim just to meet the budget; shorten explanations, headings and repetition instead. Do not add a separate sources list."
       : "";
     const noSourceInstruction = kb?.status === "no_match"
-      ? "\n\nNO KNOWLEDGE-BASE MATCH: No ROA source material was found for this question. Say plainly that you could not find a verified ROA source. Do not state specific figures, dollar amounts, dates, eligibility thresholds, statute or regulation section numbers, or policy rules as fact. If helpful, give only general orientation, explicitly labeled general and unverified. Suggest the appropriate official place to confirm (such as DFAS, TRICARE, VA, the member's unit, or JAG), and invite the user to rephrase the question. Do not imply that an answer was verified by the knowledge base."
+      ? veteranResearch
+        ? "\n\nVETERAN RESEARCH SAFETY: Do not invent a legal test, service threshold or personal eligibility conclusion. Ask the next missing service fact, or help the member identify the specific rule or record VA or an accredited representative needs to confirm. Do not narrate retrieval, missing articles or index coverage."
+        : "\n\nNO KNOWLEDGE-BASE MATCH: No ROA source material was found for this question. Say plainly that you could not find a verified ROA source. Do not state specific figures, dollar amounts, dates, eligibility thresholds, statute or regulation section numbers, or policy rules as fact. If helpful, give only general orientation, explicitly labeled general and unverified. Suggest the appropriate official place to confirm (such as DFAS, TRICARE, VA, the member's unit, or JAG), and invite the user to rephrase the question. Do not imply that an answer was verified by the knowledge base."
       : "";
     const systemPrompt = isLawCenterOnly
       ? `${config.systemPrompt}\n\nRESERVE SERVICE LAW CENTER-ONLY MODE: This answer is an article search, not a general legal answer. Ground every substantive statement in the supplied ROA Reserve Service Law Center article titles and content. Identify the relevant article topic naturally. Include the full article URL every time you cite or name an article. If the supplied articles are insufficient, say so instead of filling gaps from general knowledge, suggest switching back to the complete navigator, and include the exact link [Full ReserveConnect Navigator](/). Finish every sentence and conclude cleanly.${lawCenterLeaseDirective}`
@@ -1831,6 +1900,8 @@ app.post("/chat", limitRequests(30, 15 * 60 * 1000), async (req, res) => {
           ? "\n\nVA CITATION FORMAT: For each substantive benefit explanation, cite its supplied numbered source using [[SOURCE:1]], [[SOURCE:2]], etc., matching the [Source N: ...] headers. Do not guess or retype URLs. The server replaces these markers with the actual retrieved source links. Use only sources that establish the statement; a source number is not itself proof. Give a short sourced overview before asking one genuinely missing follow-up question."
           : "") +
         conciseInstruction + noSourceInstruction + intakeDirective +
+        veteranGuidanceInstruction(veteranQuestion, kb?.sourceDocuments || [], cleanHistory) +
+        trainingAuthorityInstruction(`${veteranQuestion}\n${vaQuestion}`, kb?.sourceDocuments || []) +
         payTrainingDirective + confirmedYearsDirective + payChoiceDirective +
         diversionDirective +
         (!crisisSessionActive && Object.keys(conversation.payFacts).length
@@ -1885,8 +1956,10 @@ app.post("/chat", limitRequests(30, 15 * 60 * 1000), async (req, res) => {
       ];
     }
 
-    const citationMarkers = requiresVaEvidence
-      ? resolveVaCitationMarkers(streamedText, kb?.sourceDocuments || [])
+    const trainingCitations = (kb?.retrieval?.trainingAuthoritySelectedChunks || 0) > 0;
+    const citationMarkers = requiresVaEvidence || trainingCitations
+      ? resolveVaCitationMarkers(trainingCitations
+          ? normalizeTrainingCitationLists(streamedText) : streamedText, kb?.sourceDocuments || [])
       : { text: streamedText, unresolved: false };
     streamedText = citationMarkers.text;
     const vaDraftCitations = requiresVaEvidence
@@ -1955,11 +2028,9 @@ app.post("/chat", limitRequests(30, 15 * 60 * 1000), async (req, res) => {
       streamedText = removeRepeatedDd214Awareness(streamedText) ||
         "We have already covered the DD Form 214-1 awareness question. What would you like help with next?";
     }
-    streamedText = streamedText.replace(/\[LAW_CENTER_BANNER\]/g, "").trim();
-    if (kb?.retrieval?.veteranDefinitionAvailable &&
-        !streamedText.includes(VETERAN_DEFINITION_URL)) {
-      streamedText += `\n\nRelated definition reference: [ROA Law Review 26074 — Who Is a “Veteran”?](${VETERAN_DEFINITION_URL}). Veteran status and eligibility for a particular benefit must be considered separately.`;
-    }
+    streamedText = formatServiceCharacterizationQuestions(
+      streamedText.replace(/\[LAW_CENTER_BANNER\]/g, "").trim(),
+    );
     // Do not display even a partial disability answer without a citation to
     // evidence actually retrieved for this turn.
     if (requiresVaEvidence && !vaClarificationOnly &&
