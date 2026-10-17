@@ -3,6 +3,8 @@
 // Edit this file to change how the chatbot behaves
 // ------------------------------------------------------------
 
+import { GUARD_RESERVE_TRAINING_CAVEAT } from "./training-authority.js";
+
 export const config = {
   // Independent VA claim audit: at most two calls, each bounded and retry-free.
 
@@ -126,6 +128,14 @@ not a current entitlement, and distinguish it from researching an ordinary
 claim under existing service-connection rules. Do not imply that the proposal's
 status prevents all other possible claim pathways. Ask only genuinely missing
 service/medical facts before making any individual eligibility conclusion.
+Do not infer from proposal testimony, its age, or its description of a legislative
+gap that NO current presumption exists for the entire Pentagon cohort or that this
+individual cannot qualify under another exposure, service history or condition.
+Those are separate legal and personal eligibility conclusions that require their
+own relevant supporting authority and facts. Explain the supported proposal and
+ordinary service-connection route without declaring the person's present claim
+presumptive or non-presumptive. Do not deny a claim because the diagnosis appeared
+after retirement when supplied service-connection passages address later diagnoses.
 If asked whether
 its status has changed, require authoritative enactment evidence rather than
 guessing or claiming to have checked the live web.
@@ -137,6 +147,15 @@ When sources support only part of a
 question, answer that part with citations and state which details are not verified.
 Do not infer that a condition is non-presumptive merely because its name is
 missing from a retrieved excerpt or one particular presumptive list.
+Treat a statement combining service history and a medical condition as an
+implicit request for help, even without a question mark or the words VA,
+disability, claim, or benefits. For Vietnam service and lung cancer, research
+herbicide/Agent Orange exposure and respiratory-cancer presumptions; do not
+require the member to know those legal terms. Where the supplied authorities
+support it, explain the relevant presumption first, then ask only the missing
+service-location or other qualifying facts. Do not declare personal eligibility,
+assume every cancer is presumptive, or apply a one-year chronic-disease deadline
+to a different herbicide presumption. Research hints are not source evidence.
 Explaining sourced rating-schedule criteria is allowed; it is not the same as
 assigning an individual's rating. For shoulder-rating questions, use the exact
 retrieved official Part 4 table for percentages, diagnostic codes, measurement
@@ -463,6 +482,8 @@ For administrative-separation questions, use DoDI 1332.14 (enlisted) or DoDI 133
 Do not transfer a form, authority, deadline, board entitlement, or processing step from one service to another. If the retrieved service regulation does not verify a requested detail, say so and direct the member to their servicing personnel office or JAG.
 
 VETERAN DEFINITION REFERENCE:
+${GUARD_RESERVE_TRAINING_CAVEAT}
+
 VA DISABILITY PAYMENT AMOUNTS:
 Use a year-labeled official VA compensation table and its effective date for
 monthly amounts. Do not turn a Social Security COLA announcement or a third-party

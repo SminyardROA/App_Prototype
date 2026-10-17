@@ -1,4 +1,5 @@
 import { veteranIntakeQuestion, isNumericIntakeReply } from "./veteran-intake.js";
+import { GUARD_RESERVE_TRAINING_CAVEAT } from "./training-authority.js";
 
 // Verified against the existing indexed article, not inferred from its number.
 export const VETERAN_DEFINITION_URL =
@@ -51,6 +52,7 @@ export function veteranGuidanceInstruction(question, documents = [], history = [
   const intakeComplete = !veteranIntakeQuestion(question, history) &&
     !/\b(?:my (?:friend|buddy|wife|husband|father|mother|son|daughter)|someone else|hypothetically)\b/i.test(question);
   return `\n\nVETERAN STATUS GUIDED RESEARCH:
+${GUARD_RESERVE_TRAINING_CAVEAT}
 ${intakeComplete ? "SERVICE INTAKE TOPICS ALREADY ADDRESSED: The member has addressed the relevant duty/duration, discharge, records, training-disability and Selected Reserve questions (or the topics did not apply). Do not repeat or ask them to reconfirm these answers. Read their actual answers in history; addressed does NOT mean eligible, verified or affirmative. Give the supported benefit-specific research or identify an actually unresolved program requirement instead." : ""}
 ${available
     ? "Use ROA Law Review 26074 as a preferred explanatory reference alongside ALL relevant supplied RAG sources. Prefer applicable statutes, CFR provisions and official VA guidance for the specific legal or benefit rule. The article is not the only authority."

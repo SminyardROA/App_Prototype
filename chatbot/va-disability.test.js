@@ -55,6 +55,16 @@ test("condition support must appear in the passage, not just in its title", () =
   assert.equal(validateVaCitationLinks("See https://www.va.gov/fake", [cancer]).hasUnknownCitation, true);
   assert.equal(validateVaCitationLinks(`See [source](${cancer.url}).`, [cancer]).hasRetrievedCitation, true);
   const closing = "For more information, visit the [Reserve Service Law Center](https://roa.org/lawcenter/).";
+  const inline = `For advice specific to your situation, consult a JAG attorney or accredited VA claims agent. ${closing}`;
+  assert.deepEqual(validateVaCitationLinks(`See [source](${cancer.url}).\n\n${inline}`, [cancer]), {
+    hasRetrievedCitation: true, hasUnknownCitation: false,
+  }, "an inline navigation closing must not discard real retrieved citations");
+  assert.deepEqual(validateVaCitationLinks(inline, [cancer]), {
+    hasRetrievedCitation: false, hasUnknownCitation: false,
+  }, "an inline navigation closing cannot replace source evidence");
+  assert.equal(validateVaCitationLinks(
+    `See [source](${cancer.url}) and [invented rule](https://www.va.gov/invented-rule). ${inline}`, [cancer],
+  ).hasUnknownCitation, true, "ignore only the exact closing, not other links in its paragraph");
   assert.deepEqual(validateVaCitationLinks(closing, [cancer]), {
     hasRetrievedCitation: false, hasUnknownCitation: false,
   });

@@ -150,6 +150,9 @@ test("guided instructions cover records, distinct duty types and benefit-specifi
     assert.match(instruction, expected);
   }
   assert.match(instruction, /\(Honorable, Under Honorable Conditions, etc\.\)/);
+  assert.match(instruction, /STANDING GUARD\/RESERVE VETERAN-DEFINITION CAVEAT/);
+  assert.match(instruction, /Guard and Reserve initial active duty for training \(IADT\)/);
+  assert.match(instruction, /Always preserve the exception/);
   assert.doesNotMatch(instruction, /claim.by.claim.*check|mandatory.*audit/i);
   assert.equal(veteranGuidanceInstruction("What is my drill pay?", [definition]), "");
   const missing = veteranGuidanceInstruction("Am I a veteran?", []);

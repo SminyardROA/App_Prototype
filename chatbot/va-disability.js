@@ -1,5 +1,7 @@
 import { SHOULDER_TOPIC, isShoulderRatingQuestion } from "./shoulder-ratings.js";
 import { vaCfrPlans } from "./va-cfr-retrieval.js";
+import { isServiceHealthStatement, isHerbicideResearch, herbicideSearchQuery,
+  VIETNAM_TOPIC, LUNG_CANCER_TOPIC } from "./service-health-research.js";
 import { SUSAN_LUKAS_TOPIC, PENTAGON_911_EXPOSURE,
   isPentagon911HealthQuestion, isSusanLukasResearchQuestion, HEADACHE_TOPIC } from "./legislation-topics.js";
 import {
@@ -15,7 +17,7 @@ const SPECIFIC_SUBJECT_PATTERNS = [
     SUSAN_LUKAS_TOPIC,
     SHOULDER_TOPIC,
     /\b(?:cancers?|carcinoma|malignan\w*|lymphoma|glioblastoma|melanoma|leukemia)\b/i,
-    /\bprostate cancer\b/i, /\bbreast cancer\b/i, /\b(?:lung|respiratory) cancer\b/i,
+    /\bprostate cancer\b/i, /\bbreast cancer\b/i, LUNG_CANCER_TOPIC,
     /\bkidney cancer\b/i, /\bpancreatic cancer\b/i,
     /\blymphoma\b/i, /\bmelanoma\b/i, /\bleukemia\b/i, /\bglioblastoma\b/i,
     /\bAgent Orange\b/i, /\bburn pits?\b/i, /\bCamp Lejeune\b/i,
@@ -69,7 +71,7 @@ export function isVaDisabilityQuestion(question) {
   const hasNamedCondition = SHOULDER_TOPIC.test(text) || RESPIRATORY_TOPIC.test(text) || HEADACHE_TOPIC.test(text) ||
     /\b(?:PTSD|tinnitus|sleep apnea|TBI|cancers?|carcinoma|lymphoma|melanoma|leukemia)\b/i.test(text);
 
-   return vaCfrPlans(text).length > 0 || isSusanLukasResearchQuestion(text) ||
+   return isServiceHealthStatement(text) || vaCfrPlans(text).length > 0 || isSusanLukasResearchQuestion(text) ||
      hasPresumptiveTopic || hasDisabilityProgram || isShoulderRatingQuestion(text) ||
     isInjuryResearchQuestion(text) ||
     (hasNamedCondition && hasClaimOrBenefitTerm) ||
@@ -81,6 +83,7 @@ export function isVaDisabilityQuestion(question) {
 const FOLLOW_UP = /^(?:what|how|why|when|where|can|could|does|do|is|are|and|also|yes|no|thanks|tell me more|explain that|which)\b/i;
 const OTHER_TOPIC = /\b(?:USERRA|SCRA|UCMJ|BAH|BAS|TRICARE|GI Bill|home loans?|housing allowance|drill pay|civilian employer|reemployment|voting|military divorce)\b/i;
 const EXPOSURE_CONTEXT = [
+  VIETNAM_TOPIC,
   /\bAgent Orange\b/i, /\bburn pits?\b/i, /\bCamp Lejeune\b/i,
   /\bGulf War\b/i, /\bradiation exposure\b/i,
   PENTAGON_911_EXPOSURE,
@@ -155,6 +158,7 @@ export function resolveVaDisabilityQuestion(message, history = []) {
 
 export function focusedVaSearchQuery(question) {
   const text = String(question || "");
+  if (isHerbicideResearch(text)) return herbicideSearchQuery(text);
   if (isSusanLukasResearchQuestion(text)) {
     return `${text}\nSusan E. Lukas Act ROA proposed legislation Pentagon September 11 illness service members nonresponders; existing VA claim service connection evidence 38 CFR 3.303${HEADACHE_TOPIC.test(text) ? "; headache migraine candidate rating criteria 38 CFR 4.124a Diagnostic Code 8100" : ""}`;
   }
@@ -239,10 +243,11 @@ export function validateVaCitationLinks(answer, documents = []) {
     catch { return ""; }
   };
   const retrieved = new Set(documents.map(document => normalize(document.url)).filter(Boolean));
-  // This exact product closing is navigation, not evidence. Do not let it
-  // satisfy the source boundary or reject an otherwise cited answer.
+  // This exact product closing is navigation, not evidence. The model may
+  // place it after another sentence in the same paragraph. Strip only that
+  // closing, never the paragraph's other citations or substantive claims.
   const evidenceAnswer = String(answer || "").replace(
-    /^For more information, visit the \[Reserve Service Law Center\]\(https:\/\/roa\.org\/lawcenter\/?\)\.?\s*$/gim, "",
+    /\bFor more information, visit the \[Reserve Service Law Center\]\(https:\/\/roa\.org\/lawcenter\/?\)\.?/gi, "",
   );
   const cited = [...new Set((evidenceAnswer.match(/https?:\/\/[^\s<>"\])]+/gi) || [])
     .map(url => normalize(url.replace(/[.,;:!?]+$/, ""))).filter(Boolean))];

@@ -1,6 +1,7 @@
 import { isCfrTitle38Source, LIMB_LOSS_TOPIC } from "./injury-retrieval.js";
 import { cfrPart } from "./source-provenance.js";
 import { isPentagon911HealthQuestion, HEADACHE_TOPIC } from "./legislation-topics.js";
+import { isHerbicideResearch } from "./service-health-research.js";
 
 // Retrieval hints only: these do not establish eligibility, percentages, or
 // whether a particular diagnostic code applies to a member.
@@ -56,12 +57,21 @@ export function vaCfrPlans(question) {
   const medicalRating = /rating|criteria|schedule|percentage/i.test(text) &&
     (/mental health|mental.disorder|hearing loss/i.test(text) || HEADACHE_TOPIC.test(text));
   const pentagonHealth = isPentagon911HealthQuestion(text);
+  const herbicideResearch = isHerbicideResearch(text);
   const limbLoss = LIMB_LOSS_TOPIC.test(text);
-  if (!vaContext.test(text) && !namedRatingCode && !medicalRating && !pentagonHealth && !limbLoss) return [];
+  if (!vaContext.test(text) && !namedRatingCode && !medicalRating && !pentagonHealth && !limbLoss && !herbicideResearch) return [];
   if (/\b(?:SSDI|workers.? compensation|AMA Guides)\b/i.test(text) && !vaContext.test(text)) return [];
   // Do not interpret an unrelated title's section number as a Title 38 rule.
   if (/\b(?:10|20|29|32|50)\s*C\.?F\.?R\.?/i.test(text) && !/\b38\s*C\.?F\.?R\.?/i.test(text)) return [];
   if (pentagonHealth) add({ key: "3.303", section: "3.303", preferred: topics[0][2] });
+  if (herbicideResearch) {
+    add({ key: "herbicide-exposure", section: "3.307",
+      required: /(?:Republic of Vietnam|herbicide agent)/i,
+      preferred: /shall be presumed to have been exposed/i });
+    add({ key: "herbicide-diseases", section: "3.309",
+      required: /(?:disease associated with exposure to certain herbicide|respiratory cancers)/i,
+      preferred: /respiratory cancers|Type 2 diabetes|Parkinson/i });
+  }
   if (limbLoss) {
     add({ key: "amputation-schedule", section: "4.71a", required: /\bamputat\w*\b/i });
     add({ key: "anatomical-loss-compensation", section: "3.350", required: /\b(?:anatomical loss|loss of use|amputat\w*)\b/i });

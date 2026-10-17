@@ -789,7 +789,8 @@ async function getKnowledgeBaseContext(
     const cfrPlans = lawCenterOnly ? [] : vaCfrPlans(`${question}\n${evidenceQuestion}`);
     const vaDisabilityQuestion = isVaDisabilityQuestion(question) || cfrPlans.length > 0;
     const trainingAuthorityQuery = !lawCenterOnly &&
-      isTrainingServiceResearch(`${question}\n${evidenceQuestion}`);
+      (isTrainingServiceResearch(`${question}\n${evidenceQuestion}`) ||
+        isVeteranDefinitionQuestion(question));
     const veteranDefinitionQuery = isVeteranDefinitionQuestion(question) || trainingAuthorityQuery;
     // Service-definition research also needs the implementing regulation, but
     // must not turn a neutral Veteran-status intake into a disability question.
@@ -876,11 +877,16 @@ async function getKnowledgeBaseContext(
     }));
     let vaFocusedMatches = [];
     let cfrRecoveryFailures = 0;
+    // Use the same plain-language-to-legal expansion for exact section
+    // recovery as for full-library research, not just the original wording.
+    const cfrQueryVector = vaDisabilityQuestion
+      ? await retrievalClient.embed(focusedVaSearchQuery(evidenceQuestion))
+      : queryVector;
     const exactCfrResults = await Promise.all([...new Set(cfrPlans.map(plan => plan.section))]
       .map(async section => {
         try {
           return await queryKnowledgeIndex(retrievalClient, {
-            vector: queryVector, topK: 64, filter: { section: { $eq: section } },
+            vector: cfrQueryVector, topK: 64, filter: { section: { $eq: section } },
             signal: AbortSignal.timeout(10000),
           });
         } catch {
@@ -917,7 +923,7 @@ async function getKnowledgeBaseContext(
       }
     }
     if (vaDisabilityQuestion) {
-      const focusedVector = await retrievalClient.embed(focusedVaSearchQuery(evidenceQuestion));
+      const focusedVector = cfrQueryVector;
       const focusedResults = await queryKnowledgeIndex(retrievalClient, {
         vector: focusedVector, topK: 30,
         ...(lawCenterOnly ? { filter: { type: { $eq: "law-center-pdf" } } } : {}),

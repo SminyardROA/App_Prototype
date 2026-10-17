@@ -5,7 +5,9 @@ import {
   TRAINING_STATUTE_URL, isTrainingServiceResearch, selectTrainingAuthority,
   trainingAuthorityInstruction,
   normalizeTrainingCitationLists,
+  GUARD_RESERVE_TRAINING_CAVEAT,
 } from "./training-authority.js";
+import { config } from "./config.js";
 import { app, getKnowledgeBaseContext } from "./server.js";
 import { VETERAN_DEFINITION_URL } from "./veteran-definition.js";
 
@@ -111,6 +113,21 @@ test("full RAG remains available while low-scoring statute, CFR and preferred ar
   assert.ok(kb.sourceDocuments.some(doc => doc.url === VETERAN_DEFINITION_URL));
   assert.ok(retrievalClient.calls.some(call => !call.filter), "full member corpus still searched");
   assert.equal(retrievalClient.calls.filter(call => call.filter?.$and).length, 1);
+});
+
+test("general Veteran-definition research includes the statute and standing training caveat without requiring a training keyword", async () => {
+  assert.ok(config.systemPrompt.includes(GUARD_RESERVE_TRAINING_CAVEAT));
+  assert.match(GUARD_RESERVE_TRAINING_CAVEAT, /§ 101\(21\)\(A\).*other than active duty for training/);
+  assert.match(GUARD_RESERVE_TRAINING_CAVEAT, /IADT alone generally does not establish/);
+  assert.match(GUARD_RESERVE_TRAINING_CAVEAT, /§ 101\(24\)\(B\).*disabled or died from a disease or injury/);
+  assert.match(GUARD_RESERVE_TRAINING_CAVEAT, /regular active-duty enlistment is different/);
+  assert.match(GUARD_RESERVE_TRAINING_CAVEAT, /keep Veteran status separate from each benefit/);
+  const retrievalClient = client();
+  const kb = await getKnowledgeBaseContext("I'm in the Guard. How can I tell whether I'm a veteran?", { retrievalClient });
+  assert.equal(kb.retrieval.trainingAuthoritySelectedChunks, 1);
+  assert.equal(kb.sourceDocuments[0].url, TRAINING_STATUTE_URL);
+  assert.ok(kb.sourceDocuments.some(doc => doc.url === VETERAN_DEFINITION_URL));
+  assert.ok(retrievalClient.calls.some(call => !call.filter), "full member RAG still searched");
 });
 
 test("a failed or empty targeted lookup preserves other sources without a new refusal gate", async () => {

@@ -36,6 +36,8 @@ test("the Pentagon respiratory question researches the proposal without requirin
     "Pentagon, Sept. 11, 2001: respiratory illness and VA benefits?",
     "I served at the Pentagon on 9/11 and have persistent headaches.",
     "I was at the Pentagon on September 11 and now have migraines.",
+    "I was a service member at the Pentagon on Sept 11, 2001, retired in 2010 and now have respiratory issues due to my Sept 11 service.",
+    "I was at the Pentagon on 9/11 and now have lung problems. What should I do",
   ]) {
     assert.equal(isPentagon911HealthQuestion(text), true, text);
     assert.equal(isVaDisabilityQuestion(text), true, text);
@@ -46,6 +48,61 @@ test("the Pentagon respiratory question researches the proposal without requirin
     "How does the Post-9/11 GI Bill work?", "I have respiratory problems after civilian work"]) {
     assert.equal(isPentagon911HealthQuestion(text), false, text);
     assert.equal(isSusanLukasResearchQuestion(text), false, text);
+  }
+});
+
+test("both reported Pentagon questions preserve sourced guidance when the Law Center closing shares a paragraph", async () => {
+  const originalStream = Anthropic.Messages.prototype.stream;
+  const originalCreate = Anthropic.Messages.prototype.create;
+  const originalClient = app.locals.retrievalClient;
+  const proposalUrl = sourceDocument(proposal).url;
+  let generations = 0;
+  Anthropic.Messages.prototype.stream = params => {
+    generations++;
+    const system = JSON.stringify(params.system);
+    assert.match(system, /Do not infer from proposal testimony/);
+    assert.match(system, /without declaring the person's present claim/);
+    return { async *[Symbol.asyncIterator]() {
+      yield { type: "content_block_delta", delta: { type: "text_delta", text:
+        `ROA's Susan E. Lukas Act is proposed legislation, not an existing entitlement [ROA statement](${proposalUrl}).\n\n` +
+        `The supplied service-connection rule provides a separate route to research a condition linked to service [service connection](${framework.metadata.url}). ` +
+        "For advice specific to your situation, consult an accredited VA representative. For more information, visit the [Reserve Service Law Center](https://roa.org/lawcenter/).\n\n" +
+        "What respiratory condition has been diagnosed?" } };
+      yield { type: "message_delta", delta: { stop_reason: "end_turn" } };
+    } };
+  };
+  Anthropic.Messages.prototype.create = async () => assert.fail("do not restore a claim-by-claim AI audit");
+  app.locals.retrievalClient = {
+    indexHost: "fixture.invalid", embed: async () => [1],
+    fetch: async () => ({ ok: true, json: async () => ({ matches: [proposal, framework] }) }),
+  };
+  const server = app.listen(0);
+  try {
+    for (const message of [
+      "I was a service member at the Pentagon on Sept 11, 2001, retired in 2010 and now have respiratory issues due to my Sept 11 service.",
+      "I was at the Pentagon on 9/11 and now have lung problems. What should I do",
+    ]) {
+      const response = await fetch(`http://127.0.0.1:${server.address().port}/chat`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, conversationHistory: [] }),
+      });
+      const events = (await response.text()).split("\n")
+        .filter(line => line.startsWith("data: {")).map(line => JSON.parse(line.slice(6)));
+      const done = events.findLast(event => event.type === "done");
+      assert.match(done.finalText, /proposed legislation/);
+      assert.match(done.finalText, /separate route/);
+      assert.match(done.finalText, /What respiratory condition/);
+      assert.doesNotMatch(done.finalText, /couldn't produce a source-supported|Please narrow/);
+      assert.ok(done.sources.includes(proposalUrl));
+      assert.ok(done.sources.includes(framework.metadata.url));
+      assert.ok(!done.sources.includes("https://roa.org/lawcenter/"), "navigation is not source evidence");
+    }
+    assert.equal(generations, 2);
+  } finally {
+    Anthropic.Messages.prototype.stream = originalStream;
+    Anthropic.Messages.prototype.create = originalCreate;
+    app.locals.retrievalClient = originalClient;
+    await new Promise(resolve => server.close(resolve));
   }
 });
 

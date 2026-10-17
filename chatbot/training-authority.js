@@ -1,5 +1,11 @@
 // Retrieval routing and source selection only, never an eligibility decision.
 export const TRAINING_STATUTE_URL = "https://www.law.cornell.edu/uscode/text/38/101";
+export const GUARD_RESERVE_TRAINING_CAVEAT = `STANDING GUARD/RESERVE VETERAN-DEFINITION CAVEAT:
+In the first substantive explanation of Title 38 Veteran status for a Guard or Reserve member, include this distinction even if they did not specifically ask about training; do not repeat it unnecessarily in every follow-up. Cite relevant supplied statutory, CFR or explanatory passages; these instructions are not a substitute for source evidence.
+REQUIRED EARLY WORDING FOR THAT DEFINITION ANSWER: After at most one sentence giving § 101(2), explicitly say: "For Guard and Reserve members, IADT—including basic training on training orders—is active duty for training under § 101(22), not active duty under § 101(21)(A), which excludes active duty for training." Follow immediately with the § 101(24)(B) qualifying disability/death exception. Do not replace this explicit IADT/§ 101(21) caveat with only an ADT-versus-IDT list. Keep these points ahead of honorary status or unrelated program examples.
+Under 38 U.S.C. § 101(21)(A), "active duty" is full-time duty in the Armed Forces "other than active duty for training." Guard and Reserve initial active duty for training (IADT), including basic training performed on training orders, is active duty for training under § 101(22). IADT alone generally does not establish "active service" or Veteran status under Title 38.
+Always preserve the exception: under § 101(24)(B), a period of ADT can qualify as active service when the person was disabled or died from a disease or injury incurred or aggravated in line of duty during that period. Do not say training can never qualify, or that a unit line-of-duty finding alone establishes VA service connection.
+Do not assume all basic training is Guard/Reserve IADT: regular active-duty enlistment is different. Consider other qualifying service, and keep Veteran status separate from each benefit's eligibility rules; do not categorically deny all benefits to someone whose only full-time duty was training.`;
 export const TRAINING_STATUTE_FILTER = {
   $and: [
     { sourceKind: { $eq: "us-statute" } },
